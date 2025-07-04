@@ -1,0 +1,12 @@
+# Flask: Web framework for API
+Flask==2.3.2
+# Firebase Admin SDK: For Firestore database access
+firebase-admin==6.2.0
+# Scikit-learn: For ML model
+scikit-learn==1.4.2
+# Joblib: For model serialization
+joblib==1.4.2
+# Pandas: For data manipulation
+pandas==2.2.2
+# Gunicorn: For production server (optional, for deployment)
+gunicorn==21.2.0 

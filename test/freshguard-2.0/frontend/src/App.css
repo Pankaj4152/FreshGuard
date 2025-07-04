@@ -1,0 +1,9 @@
+/* Tailwind base styles will be injected by build */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for FreshGuard 2.0 */
+body {
+  font-family: 'Inter', sans-serif;
+} 
