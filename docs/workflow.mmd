@@ -1,0 +1,15 @@
+flowchart TD
+    A[User starts session] --> B[User views inventory / searches for item]
+    B --> C[User adds item to cart]
+    C --> D[Predict shelf_life_days using AI model]
+    D --> E[Update users_cart.json with expiry_date]
+    E --> F[Scan current_walmart_inventory.json for near-expiry matches<br/>(expiry within 5 days)]
+    F -->|Match found| G[Show replacement offer<br/>(discount & 10 loyalty points)]
+    G -->|User accepts| H[Add near-expiry item to cart<br/>Apply discount & points]
+    G -->|User rejects| I[Add original item to cart<br/>Regular price, no points]
+    F -->|No match| I
+    I --> J[Confirm cart contents]
+    H --> J
+    J --> K[Proceed to checkout<br/>Update walmart_inventory.json stock]
+    K --> L[Calculate & display food saved<br/>(e.g., 4 kg for near-expiry items)]
+    L --> M[Session ends]

@@ -1,0 +1,16 @@
+{
+  "101": {
+    "ITEM0075": {
+      "item_name": "Pork",
+      "quantity": 10,
+      "price_per_unit": 7.49,
+      "added_at": "2025-07-05T00:12:55.513786"
+    },
+    "ITEM0074": {
+      "item_name": "Beef",
+      "quantity": 10,
+      "price_per_unit": 8.99,
+      "added_at": "2025-07-05T00:13:06.485000"
+    }
+  }
+}
