@@ -67,6 +67,8 @@ def print_cart(user_id):
     total = sum(item['quantity'] * item['price_per_unit'] for item in cart_data[user_id].values())
     print(f"Total Price: ${total:.2f}")
 
+
+
 # Example usage:
 if __name__ == "__main__":
     user_id = "user101"

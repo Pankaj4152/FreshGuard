@@ -9,6 +9,7 @@ import json
 import os
 from datetime import datetime
 from cart_manage import add_item_to_cart, remove_item_from_cart, print_cart, load_cart_data, save_cart_data
+from replacement_utils import find_nearest_expiry_item
 
 # Dynamically determine the base directory (project root)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,6 +84,19 @@ def main():
             if item['current_stock'] <= 0:
                 print("Sorry, this item is out of stock.")
                 continue
+
+            # Replacement suggestion logic
+            replacement = find_nearest_expiry_item(item['item_name'])
+            use_replacement = False
+            if replacement and replacement['item_id'] != item['item_id']:
+                print("\nA near-expiry replacement is available:")
+                print(f"{replacement['item_id']}: {replacement['item_name']} (Stock: {replacement['current_stock']}, "
+                      f"Price: ${replacement['price_per_unit']}, Expiry: {replacement['expiry_date']})")
+                choice = input("Add this replacement item instead? (yes/no): ").strip().lower()
+                if choice in ("yes", "y"):
+                    item = replacement
+                    use_replacement = True
+
             try:
                 quantity = int(input(f"Quantity (Available: {item['current_stock']}): "))
                 if quantity <= 0:
@@ -94,8 +108,13 @@ def main():
             except ValueError:
                 print("Invalid quantity.")
                 continue
+
             add_item_to_cart(user_id, item['item_id'], item['item_name'], quantity, item['price_per_unit'])
-            print("Item added to cart.")
+            if use_replacement:
+                print("Replacement item added to cart.")
+            else:
+                print("Item added to cart.")
+
         elif cmd == "remove":
             print_cart(user_id)
             item_id = input("Item ID to remove: ").strip()
