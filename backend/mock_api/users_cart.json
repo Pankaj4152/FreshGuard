@@ -12,5 +12,23 @@
     "total_price_after_discount": 3.235,
     "food_saved": 0,
     "co2_reduced": 0
+  },
+  "user2": {
+    "total_price": 0,
+    "total_price_after_discount": 0,
+    "food_saved": 0,
+    "co2_reduced": 0
+  },
+  "user3": {
+    "ITEM0075": {
+      "item_name": "Pork",
+      "quantity": 1,
+      "price_per_unit": 7.49,
+      "added_at": "2025-07-06T00:53:10.264103"
+    },
+    "total_price": 7.49,
+    "total_price_after_discount": 7.49,
+    "food_saved": 0,
+    "co2_reduced": 0
   }
 }
