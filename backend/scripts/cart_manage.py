@@ -132,7 +132,7 @@ def add_loyalty_points(user_id, points):
     save_loyalty_points(data)
     return data[user_id]
 
-def checkout_cart(user_id, points_earned, loyalty_file=LOYALTY_FILE, clear=True):
+def checkout_cart(user_id, points_earned=None, clear=True, loyalty_file=LOYALTY_FILE):
     """
     Checkout: totals cart price and loyalty points, shows summary, awards loyalty points, and optionally clears the cart.
     Returns a summary dict.
@@ -145,8 +145,11 @@ def checkout_cart(user_id, points_earned, loyalty_file=LOYALTY_FILE, clear=True)
     total_price = sum(item['quantity'] * item['price_per_unit'] for item in cart.values())
     total_items = sum(item['quantity'] for item in cart.values())
 
-    # Calculate and award loyalty points (1 point per item)
-    points_earned = total_items
+    # Calculate points earned if not provided (1 point per item)
+    if points_earned is None:
+        points_earned = total_items
+    
+    # Award loyalty points
     add_loyalty_points(user_id, points_earned)
     
     # Get updated loyalty points
@@ -169,7 +172,8 @@ def checkout_cart(user_id, points_earned, loyalty_file=LOYALTY_FILE, clear=True)
         "total_price": total_price,
         "total_value": total_price,  # For frontend compatibility
         "loyalty_points": total_loyalty_points,
-        "points_earned": points_earned,
+        "loyalty_points_earned": points_earned,
+        "points_earned": points_earned,  # Alternative name for compatibility
         "total_items": total_items
     }
 

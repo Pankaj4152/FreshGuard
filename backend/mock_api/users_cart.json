@@ -13,18 +13,5 @@
       "added_at": "2025-07-05T12:57:46.142906"
     }
   },
-  "user1": {
-    "ITEM0014": {
-      "item_name": "Apple",
-      "quantity": 1,
-      "price_per_unit": 0.792,
-      "added_at": "2025-07-05T12:41:40.765677"
-    },
-    "ITEM0008": {
-      "item_name": "Juice",
-      "quantity": 1,
-      "price_per_unit": 2.6175,
-      "added_at": "2025-07-05T12:57:32.132095"
-    }
-  }
+  "user1": {}
 }

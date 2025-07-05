@@ -84,6 +84,20 @@ class ApiService {
       if (!Array.isArray(result.items)) {
         result.items = result.cart || [];
       }
+      // Convert cart objects to array format expected by frontend
+      if (Array.isArray(result.cart) && result.cart.length > 0) {
+        // Backend returns array of cart items, ensure they have required fields
+        result.cart = result.cart.map(item => ({
+          ...item,
+          // Add discounted_price if not present
+          discounted_price: item.discounted_price || item.price_per_unit,
+          // Ensure all required fields exist
+          current_stock: item.current_stock || 999,
+          category: item.category || 'General',
+          expiry_date: item.expiry_date || new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0]
+        }));
+        result.items = result.cart;
+      }
     }
     
     return result;

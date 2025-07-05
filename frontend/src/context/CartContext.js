@@ -31,7 +31,12 @@ export const CartProvider = ({ children }) => {
       const userId = user?.id || 'user1'; // Fallback for safety
       const response = await apiService.getCart(userId);
       if (response.success) {
-        setCart(response.cart || []);
+        // Backend returns cart items in 'cart' or 'items' field
+        const cartItems = response.cart || response.items || [];
+        setCart(cartItems);
+      } else {
+        console.error('Failed to load cart:', response.error);
+        setError(response.error);
       }
     } catch (error) {
       console.error('Failed to load cart:', error);

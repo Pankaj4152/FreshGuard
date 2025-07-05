@@ -1,7 +1,11 @@
+# FreshGuard 2.0 Backend Dependencies
 Flask==2.3.3
 Flask-CORS==4.0.0
-pandas==2.0.3
+pandas==2.1.3
 numpy==1.24.3
-scikit-learn==1.3.0
+scikit-learn==1.3.2
 joblib==1.3.2
 python-dateutil==2.8.2
+python-dotenv==1.0.0
+pytest==7.4.3
+pytest-flask==1.3.0

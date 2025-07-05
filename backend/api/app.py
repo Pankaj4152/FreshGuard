@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sys
 import os
+import json
 
 # Add the scripts directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
@@ -9,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from cart_manage import (
     load_cart_data, save_cart_data, add_item_to_cart, remove_item_from_cart,
     clear_cart, get_cart_summary, checkout_cart, load_loyalty_points,
-    save_loyalty_points, add_loyalty_points
+    save_loyalty_points, add_loyalty_points, get_cart
 )
 from cart_cli import (
     load_inventory, find_item_in_inventory, calculate_discount,
@@ -132,10 +133,15 @@ def api_get_cart():
             return jsonify({"success": False, "error": "user_id is required"}), 400
         
         cart_summary = get_cart_summary(user_id)
+        
+        # Ensure compatibility with frontend expectations
         return jsonify({
             "success": True,
             "user_id": user_id,
-            **cart_summary
+            "cart": cart_summary["cart"],
+            "items": cart_summary["cart"],  # Frontend expects 'items' field
+            "total": cart_summary["total"],
+            "count": len(cart_summary["cart"])
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -160,11 +166,19 @@ def api_checkout():
         user_id = data['user_id']
         clear_cart_after = data.get('clear_cart', True)
         
-        result = checkout_cart(user_id, clear=clear_cart_after)
+        # Get cart first to calculate points
+        cart = get_cart(user_id)
+        if not cart:
+            return jsonify({"success": False, "error": "Cart is empty"}), 400
+        
+        # Calculate points earned based on cart items
+        total_items = sum(item.get('quantity', 0) for item in cart.values())
+        points_earned = total_items  # 1 point per item
+        
+        result = checkout_cart(user_id, points_earned, clear=clear_cart_after)
         
         # Add food saved calculation (example: assume 1 item = 0.5kg food saved)
         if result.get("success"):
-            total_items = sum(item['quantity'] for item in result['cart_items'])
             food_saved_kg = total_items * 0.5  # Rough estimate
             co2_saved_kg = food_saved_kg * 2.5  # Rough CO2 calculation
             
@@ -229,7 +243,8 @@ def api_get_loyalty():
         return jsonify({
             "success": True,
             "user_id": user_id,
-            "loyalty_points": user_points
+            "loyalty_points": user_points,
+            "points": user_points  # Frontend compatibility
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -272,13 +287,22 @@ def api_user_impact():
         if not user_id:
             return jsonify({"success": False, "error": "user_id is required"}), 400
         
-        # Calculate user's historical impact (placeholder calculation)
+        # Load user loyalty data
         loyalty_data = load_loyalty_points()
         user_points = loyalty_data.get(user_id, 0)
         
-        # Rough calculations for demo
-        items_saved = user_points  # 1 point = 1 item saved
-        food_saved_kg = items_saved * 0.5  # 0.5kg per item
+        # Try to get enhanced user data from users_loyalty.json
+        loyalty_file = os.path.join(BASE_DIR, "mock_api", "users_loyalty.json")
+        enhanced_data = {}
+        try:
+            with open(loyalty_file, 'r') as f:
+                enhanced_data = json.load(f).get(user_id, {})
+        except:
+            pass
+        
+        # Calculate impact metrics
+        items_saved = enhanced_data.get('total_orders', 0) * 3  # Avg 3 items per order
+        food_saved_kg = enhanced_data.get('total_saved_kg', items_saved * 0.5)  # 0.5kg per item
         co2_saved_kg = food_saved_kg * 2.5  # CO2 calculation
         money_saved = items_saved * 2.5  # Average savings per item
         
@@ -290,7 +314,9 @@ def api_user_impact():
                 "food_saved_kg": round(food_saved_kg, 2),
                 "co2_saved_kg": round(co2_saved_kg, 2),
                 "money_saved": round(money_saved, 2),
-                "loyalty_points": user_points
+                "loyalty_points": user_points,
+                "level": enhanced_data.get('level', 'Bronze'),
+                "total_orders": enhanced_data.get('total_orders', 0)
             }
         })
     except Exception as e:

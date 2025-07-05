@@ -55,7 +55,7 @@ const Checkout = () => {
         totalOriginalPrice: acc.totalOriginalPrice + originalTotal,
         totalDiscountedPrice: acc.totalDiscountedPrice + discountedTotal,
         totalDiscount: acc.totalDiscount + discount,
-        loyaltyPointsEarned: acc.loyaltyPointsEarned + (item.loyalty_points || 0),
+        loyaltyPointsEarned: acc.loyaltyPointsEarned + item.quantity, // 1 point per item
         foodSaved: acc.foodSaved + (estimatedWeight * item.quantity)
       };
     }, {
@@ -74,26 +74,37 @@ const Checkout = () => {
     try {
       setLoading(true);
       
+      console.log('Starting checkout for user:', user?.id || 'user1');
+      console.log('Cart items:', cart);
+      
       const response = await apiService.checkout(user?.id || 'user1', true);
+      console.log('Checkout response:', response);
       
       if (response.success) {
-        setCheckoutResult(response);
+        setCheckoutResult({
+          ...response,
+          // Use backend calculated values or fallback to frontend calculations
+          food_saved_kg: response.environmental_impact?.food_saved_kg || orderSummary.foodSaved,
+          total_savings: response.total_value || orderSummary.totalDiscountedPrice,
+          loyalty_points_earned: response.points_earned || orderSummary.loyaltyPointsEarned
+        });
         setCheckoutComplete(true);
         
-        // Update user impact
+        // Update user impact with backend values
         if (updateUserImpact) {
           updateUserImpact({
-            foodSaved: orderSummary.foodSaved,
-            moneySaved: orderSummary.totalDiscount,
-            loyaltyPoints: orderSummary.loyaltyPointsEarned
+            foodSaved: response.environmental_impact?.food_saved_kg || orderSummary.foodSaved,
+            moneySaved: response.total_value || orderSummary.totalDiscount,
+            co2Saved: response.environmental_impact?.co2_saved_kg || 0,
+            itemsRescued: response.environmental_impact?.items_rescued || orderSummary.totalItems
           });
         }
         
-        showSuccess('Order placed successfully!');
+        showSuccess(`Order placed successfully! ${response.points_earned || orderSummary.loyaltyPointsEarned} loyalty points earned!`);
         
         // Clear cart after successful checkout
         setTimeout(() => {
-          clearCart();
+          clearCart(user?.id || 'user1');
         }, 2000);
         
       } else {
