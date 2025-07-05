@@ -238,7 +238,7 @@ dmypy.json
 
 # Large data files
 *.csv
-*.json
+# *.json
 !package.json
 !package-lock.json
 !tsconfig.json
@@ -351,7 +351,7 @@ tramp
 # ==========================================
 
 # Mock API data (if you want to keep them in git, remove these)
-backend/mock_api/*.json
+# backend/mock_api/*.json
 
 # Logs directory
 logs/

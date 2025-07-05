@@ -1,0 +1,13 @@
+{
+    "user1":{
+        "item_id": "item1",
+        "item_name": "Apple",
+        "quantity": 3,
+        "price_per_unit": 0.5,
+        "ordered_at": "2025-07-05T12:57:46.142906",
+        "loyalty_points": 5,
+        "discount_given": 0.1,
+        "total_price": 1.5,
+        "total_price_after_discount": 1.35
+    }
+}

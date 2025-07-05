@@ -1,0 +1,14 @@
+[
+    {
+        "storage_type": "refrigerated",
+        "timestamp": "2025-07-05T12:00:00Z",
+        "current_temp_c": 4.0,
+        "humidity": 0.85
+    },
+    {
+        "storage_type": "refrigerated",
+        "timestamp": "2025-07-05T12:00:00Z",
+        "current_temp_c": 4.0,
+        "humidity": 0.85
+    }
+]

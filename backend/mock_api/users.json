@@ -1,0 +1,9 @@
+{
+    "user1":{
+        "user_name": "John Doe",
+        "PII":{
+            "email": "john.doe@example.com",
+            "phone": "+1234567890"
+        }
+    }
+}

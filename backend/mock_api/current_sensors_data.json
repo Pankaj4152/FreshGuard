@@ -1,0 +1,17 @@
+{
+  "refrigerated": {
+    "current_temp_c": 4.0,
+    "humidity": 0.85,
+    "timestamp": "2025-07-05T12:00:00Z"
+  },
+  "ambient": {
+    "current_temp_c": 21.0,
+    "humidity": 0.60,
+    "timestamp": "2025-07-05T12:00:00Z"
+  },
+  "frozen": {
+    "current_temp_c": -18.0,
+    "humidity": 0.40,
+    "timestamp": "2025-07-05T12:00:00Z"
+  }
+}
