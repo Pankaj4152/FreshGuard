@@ -86,6 +86,10 @@ const ProductCard = ({ product, onAddToCart }) => {
   const expiryStatus = getExpiryStatus(product.expiry_date);
   const stockStatus = getStockStatus(product.current_stock);
   const hasDiscount = discountPercent > 0;
+  
+  // Check if this is a grouped product
+  const isGrouped = product.total_variants > 1;
+  const hasNearExpiry = product.has_near_expiry || false;
 
   return (
     <div className="product-card">
@@ -101,10 +105,22 @@ const ProductCard = ({ product, onAddToCart }) => {
       </div>
       
       <div className="product-info">
-        <h3 className="product-name">{productName}</h3>
+        <h3 className="product-name">
+          {productName}
+          {isGrouped && (
+            <span className="grouped-indicator" title={`${product.total_variants} variants available`}>
+              <Package size={12} style={{ marginLeft: '4px' }} />
+            </span>
+          )}
+        </h3>
         <div className="product-details">
           <span className="product-id">ID: {product.item_id}</span>
           <span className="product-category">{product.category}</span>
+          {isGrouped && (
+            <span className="variant-count" title="Multiple freshness options available">
+              {product.total_variants} variants
+            </span>
+          )}
         </div>
         
         <div className="product-price">
@@ -115,6 +131,11 @@ const ProductCard = ({ product, onAddToCart }) => {
             <span className="price-original">
               {formatPrice(originalPrice)}
             </span>
+          )}
+          {isGrouped && product.price_range && product.price_range.min !== product.price_range.max && (
+            <small className="price-range">
+              Range: {formatPrice(product.price_range.min)} - {formatPrice(product.price_range.max)}
+            </small>
           )}
         </div>
         
@@ -137,11 +158,18 @@ const ProductCard = ({ product, onAddToCart }) => {
           </div>
         </div>
 
-        {/* Sustainability Badge */}
+        {/* Smart selection and sustainability messages */}
         {hasDiscount && (
           <div className="sustainability-badge">
             <Star size={14} />
             <span>Eco-friendly choice • Earn extra points</span>
+          </div>
+        )}
+        
+        {isGrouped && hasNearExpiry && (
+          <div className="replacement-notice">
+            <Clock size={14} />
+            <span>Near-expiry alternatives available with discounts</span>
           </div>
         )}
         
@@ -152,9 +180,11 @@ const ProductCard = ({ product, onAddToCart }) => {
             }`}
             onClick={handleAddToCart}
             disabled={(product.current_stock || 0) <= 0}
+            title={isGrouped ? "We'll select the freshest available item for you" : "Add to cart"}
           >
             <ShoppingCart size={16} />
-            {(product.current_stock || 0) <= 0 ? 'Out of Stock' : 'Add to Cart'}
+            {(product.current_stock || 0) <= 0 ? 'Out of Stock' : 
+             isGrouped ? 'Add Fresh Item' : 'Add to Cart'}
           </button>
           
           {expiryStatus.status === 'critical' && (product.current_stock || 0) > 0 && (

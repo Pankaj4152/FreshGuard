@@ -18,6 +18,19 @@ from cart_cli import (
 )
 from replacement_utils import find_nearest_expiry_item
 
+# Try to import new grouping functionality
+try:
+    from inventory_grouping import (
+        group_inventory_by_product, 
+        find_freshest_item, 
+        find_near_expiry_replacements,
+        get_product_summary
+    )
+    GROUPING_AVAILABLE = True
+except ImportError:
+    GROUPING_AVAILABLE = False
+    print("Warning: inventory_grouping module not available, using fallback functionality")
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend integration
 
@@ -30,8 +43,14 @@ def home():
     return jsonify({
         "message": "FreshGuard 2.0 API is running!",
         "version": "2.0",
+        "features": {
+            "grouped_inventory": GROUPING_AVAILABLE,
+            "smart_replacement": True,
+            "fresh_item_selection": GROUPING_AVAILABLE
+        },
         "endpoints": [
             "/get_inventory",
+            "/get_product_details",
             "/add_to_cart",
             "/add_replacement_to_cart",
             "/remove_from_cart",
@@ -46,12 +65,19 @@ def home():
 
 @app.route('/get_inventory', methods=['GET'])
 def get_inventory():
-    """Get all inventory items with optional filtering."""
+    """Get all inventory items with optional filtering and grouping."""
     try:
         category = request.args.get('category')
         expiring_soon = request.args.get('expiring_soon', 'false').lower() == 'true'
+        grouped = request.args.get('grouped', 'true').lower() == 'true'  # Default to grouped
         
-        inventory = load_inventory()
+        if grouped and GROUPING_AVAILABLE:
+            # Use new grouped inventory approach
+            grouped_data = group_inventory_by_product()
+            inventory = grouped_data['all_grouped']
+        else:
+            # Use original individual item approach for backward compatibility
+            inventory = load_inventory()
         
         # Filter by category if provided
         if category:
@@ -77,7 +103,8 @@ def get_inventory():
         return jsonify({
             "success": True,
             "inventory": inventory,
-            "count": len(inventory)
+            "count": len(inventory),
+            "grouped": grouped and GROUPING_AVAILABLE
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -322,6 +349,53 @@ def api_user_impact():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/get_product_details', methods=['GET'])
+def get_product_details():
+    """Get detailed information about a product including all variants."""
+    try:
+        product_name = request.args.get('product_name')
+        if not product_name:
+            return jsonify({"success": False, "error": "product_name is required"}), 400
+        
+        if GROUPING_AVAILABLE:
+            product_summary = get_product_summary(product_name)
+            
+            if not product_summary:
+                return jsonify({
+                    "success": False, 
+                    "error": f"Product '{product_name}' not found"
+                }), 404
+            
+            return jsonify({
+                "success": True,
+                "product": product_summary
+            })
+        else:
+            # Fallback to basic functionality if inventory_grouping not available
+            inventory = load_inventory()
+            matching_items = [
+                item for item in inventory 
+                if item['item_name'].lower() == product_name.lower()
+            ]
+            
+            if not matching_items:
+                return jsonify({
+                    "success": False, 
+                    "error": f"Product '{product_name}' not found"
+                }), 404
+            
+            return jsonify({
+                "success": True,
+                "product": {
+                    "product_name": product_name,
+                    "total_variants": len(matching_items),
+                    "all_items": matching_items
+                }
+            })
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"success": False, "error": "Endpoint not found"}), 404
@@ -344,5 +418,6 @@ if __name__ == '__main__':
     print("- GET  /get_loyalty")
     print("- POST /predict_shelf_life")
     print("- GET  /user_impact")
+    print("- GET  /get_product_details")
     
     app.run(debug=True, host='0.0.0.0', port=5000)

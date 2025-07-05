@@ -34,8 +34,8 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
         <div className="modal-body" style={modalBodyStyle}>
           <div className="alert alert-warning mb-4">
             <p>
-              <strong>The item you selected expires soon!</strong> We found a fresher alternative 
-              with the same great quality and better shelf life.
+              <strong>Near-expiry alternative available!</strong> Save money and help reduce food waste 
+              with a discounted item that's still fresh but needs to be used soon.
             </p>
           </div>
 
@@ -43,62 +43,70 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
             {/* Original Item */}
             <div className="item-card" style={itemCardStyle}>
               <div className="item-header">
-                <span className="badge badge-danger">Expires Soon</span>
+                <span className="badge badge-primary">Fresh Choice</span>
               </div>
               <div className="item-icon" style={itemIconStyle}>
                 {getProductIcon(replacement.original?.category)}
               </div>
-              <h4>{replacement.original?.name || 'Original Item'}</h4>
+              <h4>{replacement.original?.item_name || replacement.original?.name || 'Fresh Item'}</h4>
               <div className="item-details">
-                <div className="flex items-center gap-1 text-danger">
+                <div className="flex items-center gap-1 text-primary">
                   <Clock size={16} />
                   <span>Expires: {replacement.original?.expiry_date}</span>
                 </div>
                 <div className="price">
-                  ${replacement.original?.discounted_price || replacement.original?.price_per_unit}
+                  ${(replacement.original?.discounted_price || replacement.original?.price_per_unit || 0).toFixed(2)}
                 </div>
+                <small className="text-muted">Regular choice - longer shelf life</small>
               </div>
             </div>
 
             {/* Arrow */}
             <div className="arrow" style={arrowStyle}>
-              →
+              or
             </div>
 
             {/* Replacement Item */}
             <div className="item-card recommended" style={{...itemCardStyle, ...recommendedStyle}}>
               <div className="item-header">
-                <span className="badge badge-success">Recommended</span>
+                <span className="badge badge-success">Save & Help!</span>
+                <span className="urgency-badge">
+                  {replacement.urgency_level === 'critical' ? '⚡ Urgent' : '⏰ Soon'}
+                </span>
               </div>
               <div className="item-icon" style={itemIconStyle}>
                 {getProductIcon(replacement.category)}
               </div>
-              <h4>{replacement.name}</h4>
+              <h4>{replacement.item_name || replacement.name}</h4>
               <div className="item-details">
-                <div className="flex items-center gap-1 text-success">
-                  <Package2 size={16} />
+                <div className="flex items-center gap-1 text-warning">
+                  <AlertTriangle size={16} />
                   <span>Expires: {replacement.expiry_date}</span>
+                  <small>({replacement.days_until_expiry} days left)</small>
                 </div>
                 <div className="price">
-                  ${replacement.discounted_price || replacement.price_per_unit}
-                  {replacement.discount > 0 && (
+                  ${(replacement.discounted_price || replacement.price_per_unit || 0).toFixed(2)}
+                  {(replacement.effective_discount || replacement.discount || 0) > 0 && (
                     <span className="discount-badge ml-2">
-                      {replacement.discount}% OFF
+                      {replacement.effective_discount || replacement.discount}% OFF
                     </span>
                   )}
                 </div>
+                <small className="replacement-message">
+                  {replacement.suggested_message || "Buy only if you can use it quickly"}
+                </small>
               </div>
             </div>
           </div>
 
           <div className="benefits" style={benefitsStyle}>
-            <h5>Why this replacement is better:</h5>
+            <h5>Choose the near-expiry option to:</h5>
             <ul>
-              <li>✅ Longer shelf life - stays fresh longer</li>
-              <li>✅ Same category and quality</li>
-              <li>✅ Similar or better price</li>
-              <li>✅ Reduces food waste</li>
-              <li>✅ Earn loyalty points for sustainable choice</li>
+              <li>💰 Save money with discount pricing</li>
+              <li>🏆 Earn 10 loyalty points (vs 1 for regular items)</li>
+              <li>🌱 Help reduce food waste</li>
+              <li>⚡ Get the same quality, just use it soon</li>
+              <li>📱 Track your environmental impact</li>
             </ul>
           </div>
         </div>
@@ -108,13 +116,13 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
             onClick={onDecline} 
             className="btn btn-outline"
           >
-            Keep Original
+            Keep Fresh Item
           </button>
           <button 
             onClick={() => onAccept(replacement)} 
             className="btn btn-success"
           >
-            Accept Replacement (+5 loyalty points)
+            Accept Discounted Item (+10 loyalty points)
           </button>
         </div>
       </div>

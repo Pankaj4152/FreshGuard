@@ -6,6 +6,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CART_FILE = os.path.join(BASE_DIR, "mock_api", "users_cart.json")
 LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "loyalty_points.json")
 
+
 def load_cart_data(file_path=CART_FILE):
     """
     Load cart data from JSON file.

@@ -19,6 +19,7 @@ shelf_life_ranges = {
     'Bakery': (3, 7),
     'Meat': (3, 10)
 }
+
 # Storage types per category
 category_storage_map = {
     'Beverages': ['ambient', 'refrigerated'],

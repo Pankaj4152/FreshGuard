@@ -1,5 +1,5 @@
 {
-  "101": {
+  "user1": {
     "ITEM0014": {
       "item_name": "Apple",
       "quantity": 1,
@@ -13,5 +13,13 @@
       "added_at": "2025-07-05T12:57:46.142906"
     }
   },
-  "user1": {}
+  "user2": {},
+  "test_user": {
+    "ITEM0046": {
+      "item_name": "Cheese",
+      "quantity": 1,
+      "price_per_unit": 4.4925,
+      "added_at": "2025-07-05T21:43:12.245717"
+    }
+  }
 }

@@ -180,6 +180,10 @@ class ApiService {
       queryParams.append('expiring_soon', 'true');
     }
     
+    // Add grouping parameter - default to true for better UX
+    const grouped = params.grouped !== undefined ? params.grouped : true;
+    queryParams.append('grouped', grouped.toString());
+    
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`;
     }
@@ -191,6 +195,21 @@ class ApiService {
       result.inventory = [];
     }
     
+    // Add additional metadata about grouping
+    if (result.success) {
+      result.isGrouped = result.grouped || false;
+      result.metadata = {
+        total_products: result.count || 0,
+        grouped: result.isGrouped
+      };
+    }
+    
+    return result;
+  }
+
+  // Get detailed product information
+  async getProductDetails(productName) {
+    const result = await this.request(`/get_product_details?product_name=${encodeURIComponent(productName)}`);
     return result;
   }
 
