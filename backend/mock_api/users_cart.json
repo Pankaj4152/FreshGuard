@@ -1,25 +1,16 @@
 {
   "user1": {
-    "ITEM0014": {
-      "item_name": "Apple",
-      "quantity": 1,
-      "price_per_unit": 0.792,
-      "added_at": "2025-07-05T12:41:34.935970"
-    },
     "ITEM0022": {
       "item_name": "Bagel",
       "quantity": 1,
       "price_per_unit": 2.443,
-      "added_at": "2025-07-05T12:57:46.142906"
-    }
-  },
-  "user2": {},
-  "test_user": {
-    "ITEM0046": {
-      "item_name": "Cheese",
-      "quantity": 1,
-      "price_per_unit": 4.4925,
-      "added_at": "2025-07-05T21:43:12.245717"
-    }
+      "added_at": "2025-07-05T12:57:46.142906",
+      "loyalty_points": 0,
+      "discount_given": 0
+    },
+    "total_price": 3.235,
+    "total_price_after_discount": 3.235,
+    "food_saved": 0,
+    "co2_reduced": 0
   }
 }
