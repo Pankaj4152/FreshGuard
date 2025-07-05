@@ -6,6 +6,18 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CART_FILE = os.path.join(BASE_DIR, "mock_api", "users_cart.json")
 LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "loyalty_points.json")
 
+def update_cart_summary(user_id, cart_data):
+    """
+    Recalculate and update summary fields for a user's cart.
+    """
+    user_cart = cart_data.get(user_id, {})
+    # Exclude summary fields from item iteration
+    items = {k: v for k, v in user_cart.items() if not k.startswith('total_') and k not in ['food_saved', 'co2_reduced']}
+    total_price = sum(item['quantity'] * item['price_per_unit'] for item in items.values())
+    cart_data[user_id]['total_price'] = round(total_price, 3)
+    cart_data[user_id]['total_price_after_discount'] = round(total_price, 3)
+    cart_data[user_id]['food_saved'] = 0
+    cart_data[user_id]['co2_reduced'] = 0
 
 def load_cart_data(file_path=CART_FILE):
     """
@@ -58,6 +70,7 @@ def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit):
             'price_per_unit': price_per_unit,
             'added_at': datetime.now().isoformat()
         }
+    update_cart_summary(user_id, cart_data)
     save_cart_data(cart_data)
     return {"success": True, "message": "Item added to cart."}
 
@@ -73,35 +86,51 @@ def remove_item_from_cart(user_id, item_id, quantity=None):
             del cart_data[user_id][item_id]
         else:
             cart_data[user_id][item_id]['quantity'] -= quantity
-        if not cart_data[user_id]:
-            del cart_data[user_id]
+        # If only summary fields remain, clear cart
+        item_keys = [k for k in cart_data[user_id] if not k.startswith('total_') and k not in ['food_saved', 'co2_reduced']]
+        if not item_keys:
+            cart_data[user_id] = {
+                'total_price': 0,
+                'total_price_after_discount': 0,
+                'food_saved': 0,
+                'co2_reduced': 0
+            }
+        else:
+            update_cart_summary(user_id, cart_data)
         save_cart_data(cart_data)
         return {"success": True, "message": "Item removed from cart."}
     return {"success": False, "message": "Item not found in cart."}
 
 def clear_cart(user_id):
-    """Clear all items from a user's cart but keep the user_id."""
+    """Clear all items from a user's cart but keep the user_id and reset summary fields."""
     cart_data = load_cart_data()
     if user_id in cart_data:
-        cart_data[user_id] = {}
+        cart_data[user_id] = {
+            'total_price': 0,
+            'total_price_after_discount': 0,
+            'food_saved': 0,
+            'co2_reduced': 0
+        }
         save_cart_data(cart_data)
         return {"success": True, "message": "Cart cleared."}
     return {"success": True, "message": "Cart already empty."}
 
 def get_cart(user_id):
-    """Return the user's cart as a dict."""
+    """Return the user's cart as a dict (excluding summary fields)."""
     cart_data = load_cart_data()
-    return cart_data.get(user_id, {})
+    user_cart = cart_data.get(user_id, {})
+    return {k: v for k, v in user_cart.items() if not k.startswith('total_') and k not in ['food_saved', 'co2_reduced']}
 
 def get_cart_total(user_id):
     """Return the total price for the user's cart."""
-    cart = get_cart(user_id)
-    return sum(item['quantity'] * item['price_per_unit'] for item in cart.values())
+    cart_data = load_cart_data()
+    user_cart = cart_data.get(user_id, {})
+    return user_cart.get('total_price', 0)
 
 def get_cart_summary(user_id):
-    """Return a summary of the user's cart."""
-    cart = get_cart(user_id)
-    total = get_cart_total(user_id)
+    """Return a summary of the user's cart, including summary fields."""
+    cart_data = load_cart_data()
+    user_cart = cart_data.get(user_id, {})
     items = [
         {
             "item_id": item_id,
@@ -111,9 +140,17 @@ def get_cart_summary(user_id):
             "added_at": item['added_at'],
             "subtotal": item['quantity'] * item['price_per_unit']
         }
-        for item_id, item in cart.items()
+        for item_id, item in user_cart.items()
+        if not item_id.startswith('total_') and item_id not in ['food_saved', 'co2_reduced']
     ]
-    return {"cart": items, "total": total}
+    summary = {
+        "cart": items,
+        "total": user_cart.get('total_price', 0),
+        "total_after_discount": user_cart.get('total_price_after_discount', 0),
+        "food_saved": user_cart.get('food_saved', 0),
+        "co2_reduced": user_cart.get('co2_reduced', 0)
+    }
+    return summary
 
 def load_loyalty_points(file_path=LOYALTY_FILE):
     try:
