@@ -139,11 +139,22 @@ def get_cart(user_id):
         return {}
 
 def get_cart_total(user_id):
-    """Return the total price for the user's cart."""
+    """Return the total price for the user's cart and fix stored value if incorrect."""
     try:
         cart_data = load_cart_data()
         user_cart = cart_data.get(user_id, {})
-        return user_cart.get('total_price', 0)
+        cart_total = user_cart.get('total_price', 0)
+        if cart_total is None:
+            cart_total = 0
+        # Only sum actual items, not summary fields
+        items = {k: v for k, v in user_cart.items() if not k.startswith('total_') and k not in ['food_saved', 'co2_reduced']}
+        calc_cat_total = sum(item.get('quantity', 0) * item.get('price_per_unit', 0) for item in items.values())
+        if calc_cat_total != cart_total:
+            print(f"Warning: Cart total mismatch for user {user_id}. Calculated: {calc_cat_total}, Stored: {cart_total}. Fixing stored value.")
+            cart_data[user_id]['total_price'] = calc_cat_total
+            save_cart_data(cart_data)
+            cart_total = calc_cat_total
+        return cart_total
     except Exception as e:
         print(f"Error getting cart total for user {user_id}: {e}")
         return 0
@@ -256,3 +267,6 @@ def checkout_cart(user_id, points_earned=None, clear=True, loyalty_file=LOYALTY_
         return summary
     except Exception as e:
         return {"success": False, "message": f"Checkout error: {e}"}
+
+
+print(get_cart_total("user1"))

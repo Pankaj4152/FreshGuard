@@ -2,14 +2,14 @@
   "user1": {
     "ITEM0022": {
       "item_name": "Bagel",
-      "quantity": 1,
+      "quantity": 10,
       "price_per_unit": 2.443,
       "added_at": "2025-07-05T12:57:46.142906",
       "loyalty_points": 0,
       "discount_given": 0
     },
-    "total_price": 3.235,
-    "total_price_after_discount": 3.235,
+    "total_price": 24.43,
+    "total_price_after_discount": 24.43,
     "food_saved": 0,
     "co2_reduced": 0
   },
