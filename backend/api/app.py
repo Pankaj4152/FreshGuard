@@ -19,7 +19,7 @@ from cart_manage import (
     days_until_expiry, find_best_item_for_cart, find_near_expiry_replacements,
     suggest_cart_and_replacements, get_inventory_items_for_product,
     suggest_cart_and_replacements_auto,
-    get_product_impact_preview
+    get_product_impact_preview, calculate_item_impact
 )
 
 # Import available functions from cart_cli
@@ -457,7 +457,7 @@ def api_clear_cart():
 
 @app.route('/checkout', methods=['POST'])
 def api_checkout():
-    """Checkout user's cart."""
+    """Checkout user's cart with proper environmental impact calculation."""
     try:
         data = request.json
         if not data or 'user_id' not in data:
@@ -466,27 +466,57 @@ def api_checkout():
         user_id = data['user_id']
         clear_cart_after = data.get('clear_cart', True)
         
-        # Get cart first to calculate points
+        # Get cart first to calculate impact and points
         cart = get_cart(user_id)
         if not cart:
             return jsonify({"success": False, "error": "Cart is empty"}), 400
         
-        # Calculate points earned based on cart items
+        # Calculate environmental impact for each item in cart
+        total_environmental_impact = {
+            "food_saved_kg": 0,
+            "co2_reduced_kg": 0,
+            "items_rescued": 0,
+            "total_value": 0
+        }
+        
+        for item_id, item in cart.items():
+            item_name = item.get('item_name', '')
+            quantity = item.get('quantity', 1)
+            category = item.get('category', None)
+            
+            # Calculate environmental impact for this item
+            item_impact = calculate_item_impact(item_name, quantity, category)
+            
+            total_environmental_impact["food_saved_kg"] += item_impact["food_saved_kg"]
+            total_environmental_impact["co2_reduced_kg"] += item_impact["co2_reduced_kg"]
+            total_environmental_impact["items_rescued"] += quantity
+            total_environmental_impact["total_value"] += item.get('price_per_unit', 0) * quantity
+        
+        # Calculate total items and points earned
         total_items = sum(item.get('quantity', 0) for item in cart.values())
         points_earned = total_items  # 1 point per item
         
+        # Perform checkout
         result = checkout_cart(user_id, points_earned, clear=clear_cart_after)
         
-        # Add food saved calculation (example: assume 1 item = 0.5kg food saved)
         if result.get("success"):
-            food_saved_kg = total_items * 0.5  # Rough estimate
-            co2_saved_kg = food_saved_kg * 2.5  # Rough CO2 calculation
+            # Add environmental impact to result
+            result['environmental_impact'] = total_environmental_impact
             
-            result['environmental_impact'] = {
-                "food_saved_kg": food_saved_kg,
-                "co2_saved_kg": co2_saved_kg,
-                "items_rescued": total_items
-            }
+            # Update impact dashboard with calculated values
+            try:
+                add_impact_dash(
+                    user_id,
+                    total_food_saved=total_environmental_impact["food_saved_kg"],
+                    total_money_saved=total_environmental_impact["total_value"],
+                    total_co2_reduced=total_environmental_impact["co2_reduced_kg"],
+                    total_loyalty_points=points_earned,
+                    total_orders=1,  # One order completed
+                    total_items=total_items
+                )
+                print(f"✅ Updated impact dashboard for {user_id}: {total_environmental_impact}")
+            except Exception as impact_error:
+                print(f"⚠️ Failed to update impact dashboard: {impact_error}")
         
         return jsonify(result)
     except Exception as e:
