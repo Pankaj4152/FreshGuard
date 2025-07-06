@@ -4,12 +4,10 @@ from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CART_FILE = os.path.join(BASE_DIR, "mock_api", "users_cart.json")
-LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "loyalty_points.json")
+LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "impact_dash.json")
 
 def update_cart_summary(user_id, cart_data):
-    """
-    Recalculate and update summary fields for a user's cart.
-    """
+    """Recalculate and update summary fields for a user's cart."""
     try:
         user_cart = cart_data.get(user_id, {})
         # Exclude summary fields from item iteration
@@ -23,10 +21,7 @@ def update_cart_summary(user_id, cart_data):
         print(f"Error updating cart summary for user {user_id}: {e}")
 
 def load_cart_data(file_path=CART_FILE):
-    """
-    Load cart data from JSON file.
-    Returns an empty dict if the file does not exist or is invalid.
-    """
+    """Load cart data from JSON file. Returns an empty dict if the file does not exist or is invalid."""
     if not os.path.exists(file_path):
         return {}
     try:
@@ -37,18 +32,7 @@ def load_cart_data(file_path=CART_FILE):
         return {}
 
 def save_cart_data(cart_data, file_path=CART_FILE):
-    """
-    Saves the provided cart data to a specified JSON file in an atomic and safe manner.
-    This function serializes the `cart_data` dictionary to JSON and writes it to the file specified by `file_path`.
-    To ensure data integrity, the function first writes the data to a temporary file in the same directory, and then
-    atomically replaces the target file with the temporary file. If any error occurs during the process, the temporary
-    file is removed and the exception is propagated.
-    Parameters:
-        cart_data (dict): The cart data to be saved. This should be a serializable Python dictionary.
-        file_path (str, optional): The path to the file where the cart data should be saved. Defaults to CART_FILE.
-    Raises:
-        Exception: Propagates any exception that occurs during the file writing or replacement process.
-    """
+    """Saves the provided cart data to a specified JSON file in an atomic and safe manner."""
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     temp_file = file_path + ".tmp"
     try:
@@ -167,11 +151,13 @@ def get_cart_summary(user_id):
         items = [
             {
                 "item_id": item_id,
-                "item_name": item['item_name'],
-                "quantity": item['quantity'],
-                "price_per_unit": item['price_per_unit'],
-                "added_at": item['added_at'],
-                "subtotal": item['quantity'] * item['price_per_unit']
+                "item_name": item.get('item_name', ''),
+                "quantity": item.get('quantity', 0),
+                "price_per_unit": item.get('price_per_unit', 0),
+                "added_at": item.get('added_at', ''),
+                "subtotal": item.get('quantity', 0) * item.get('price_per_unit', 0),
+                "loyalty_points": item.get('loyalty_points', 0),
+                "discount_given": item.get('discount_given', 0)
             }
             for item_id, item in user_cart.items()
             if not item_id.startswith('total_') and item_id not in ['food_saved', 'co2_reduced']
@@ -191,29 +177,169 @@ def get_cart_summary(user_id):
 def load_loyalty_points(file_path=LOYALTY_FILE):
     try:
         with open(file_path, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+            # Convert to simple user: points mapping
+            return {user: info.get("total_loyalty_points", 0) for user, info in data.items()}
     except (FileNotFoundError, json.JSONDecodeError, PermissionError) as e:
         print(f"Error loading loyalty points: {e}")
         return {}
 
 def save_loyalty_points(points_data, file_path=LOYALTY_FILE):
     try:
+        # Load the full impact_dash structure
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+        else:
+            data = {}
+        # Update only the loyalty points for each user
+        for user, points in points_data.items():
+            if user not in data:
+                data[user] = {
+                    "total_food_saved": 0,
+                    "total_money_saved": 0,
+                    "total_co2_reduced": 0,
+                    "total_loyalty_points": 0,
+                    "total_orders": 0,
+                    "total_items": 0
+                }
+            data[user]["total_loyalty_points"] = points
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w') as f:
-            json.dump(points_data, f, indent=2)
+            json.dump(data, f, indent=2)
     except Exception as e:
         print(f"Error saving loyalty points: {e}")
         raise
 
 def add_loyalty_points(user_id, points):
+    """
+    Add loyalty points to a user in impact_dash.json (LOYALTY_FILE).
+    """
     try:
-        data = load_loyalty_points()
-        data[user_id] = data.get(user_id, 0) + points
-        save_loyalty_points(data)
-        return data[user_id]
+        # Load the full impact_dash structure as a dict of dicts
+        with open(LOYALTY_FILE, 'r') as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = {}
+
+    # Ensure user entry exists with all required fields
+    if user_id not in data:
+        data[user_id] = {
+            "total_food_saved": 0,
+            "total_money_saved": 0,
+            "total_co2_reduced": 0,
+            "total_loyalty_points": 0,
+            "total_orders": 0,
+            "total_items": 0
+        }
+
+    # Add points to the user's total_loyalty_points
+    data[user_id]["total_loyalty_points"] = data[user_id].get("total_loyalty_points", 0) + points
+
+    # Save back to file
+    with open(LOYALTY_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+    return data[user_id]["total_loyalty_points"]
+
+
+def update_impact_dash(
+    user_id,
+    total_food_saved=0,
+    total_money_saved=0,
+    total_co2_reduced=0,
+    total_loyalty_points=0,
+    total_orders=0,
+    total_items=0,
+    file_path=LOYALTY_FILE
+):
+    """
+    Update or create a user's impact dash entry with the provided values.
+    Any parameter not given will default to 0.
+    """
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+        else:
+            data = {}
+
+        # If user exists, update only the provided fields, else create new
+        user_data = data.get(user_id, {
+            "total_food_saved": 0,
+            "total_money_saved": 0,
+            "total_co2_reduced": 0,
+            "total_loyalty_points": 0,
+            "total_orders": 0,
+            "total_items": 0
+        })
+
+        user_data["total_food_saved"] = total_food_saved
+        user_data["total_money_saved"] = total_money_saved
+        user_data["total_co2_reduced"] = total_co2_reduced
+        user_data["total_loyalty_points"] = total_loyalty_points
+        user_data["total_orders"] = total_orders
+        user_data["total_items"] = total_items
+
+        data[user_id] = user_data
+
+        with open(file_path, 'w') as f:
+            json.dump(data, f, indent=2)
+
+        return user_data
     except Exception as e:
-        print(f"Error adding loyalty points for user {user_id}: {e}")
-        return 0
+        print(f"Error updating impact dash for user {user_id}: {e}")
+        return None
+    
+
+def add_impact_dash(
+    user_id,
+    total_food_saved=0,
+    total_money_saved=0,
+    total_co2_reduced=0,
+    total_loyalty_points=0,
+    total_orders=0,
+    total_items=0,
+    file_path=LOYALTY_FILE
+):
+    """
+    Incrementally add to a user's impact dash entry.
+    If the user does not exist, create with the provided values (or 0).
+    """
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+        else:
+            data = {}
+
+        # Get current values or default to 0
+        user_data = data.get(user_id, {
+            "total_food_saved": 0,
+            "total_money_saved": 0,
+            "total_co2_reduced": 0,
+            "total_loyalty_points": 0,
+            "total_orders": 0,
+            "total_items": 0
+        })
+
+        user_data["total_food_saved"] += total_food_saved
+        user_data["total_money_saved"] += total_money_saved
+        user_data["total_co2_reduced"] += total_co2_reduced
+        user_data["total_loyalty_points"] += total_loyalty_points
+        user_data["total_orders"] += total_orders
+        user_data["total_items"] += total_items
+
+        data[user_id] = user_data
+
+        with open(file_path, 'w') as f:
+            json.dump(data, f, indent=2)
+
+        return user_data
+    except Exception as e:
+        print(f"Error adding to impact dash for user {user_id}: {e}")
+        return None
+    
 
 def checkout_cart(user_id, points_earned=None, clear=True, loyalty_file=LOYALTY_FILE):
     """
@@ -267,6 +393,3 @@ def checkout_cart(user_id, points_earned=None, clear=True, loyalty_file=LOYALTY_
         return summary
     except Exception as e:
         return {"success": False, "message": f"Checkout error: {e}"}
-
-
-print(get_cart_total("user1"))
