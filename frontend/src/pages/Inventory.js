@@ -27,6 +27,9 @@ const Inventory = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showExpiringSoon, setShowExpiringSoon] = useState(false);
+  const [viewMode, setViewMode] = useState('grouped'); // 'grouped' or 'individual'
+  const [showSmartFeatures, setShowSmartFeatures] = useState(true);
+  const [showDebug, setShowDebug] = useState(false); // Add debug toggle
   const [replacementModal, setReplacementModal] = useState({
     isOpen: false,
     replacement: null
@@ -46,7 +49,7 @@ const Inventory = () => {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [viewMode, showSmartFeatures]);
 
   useEffect(() => {
     filterAndSortProducts();
@@ -55,11 +58,32 @@ const Inventory = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getInventory();
+      
+      // Use smart inventory loading based on view mode
+      let response;
+      if (viewMode === 'grouped' && showSmartFeatures) {
+        response = await apiService.getGroupedInventory();
+        if (!response.success) {
+          // Fallback to regular inventory
+          response = await apiService.getInventory({ grouped: true });
+        }
+      } else {
+        response = await apiService.getInventory({ 
+          grouped: false,
+          expiring_soon: showExpiringSoon 
+        });
+      }
+      
       if (response.success) {
         // Ensure we have an array and add safety checks
-        const inventory = Array.isArray(response.inventory) ? response.inventory : [];
+        const inventory = Array.isArray(response.inventory) ? response.inventory : 
+                         Array.isArray(response.all_grouped) ? response.all_grouped : [];
         setProducts(inventory);
+        
+        // Add metadata about grouping
+        if (response.isGrouped || response.grouping_enabled) {
+          console.log('Using grouped inventory with smart features');
+        }
       }
     } catch (error) {
       console.error('Error loading products:', error);
@@ -153,46 +177,62 @@ const Inventory = () => {
       return { success: false };
     }
 
-    console.log('HandleAddToCart called with:', { product, quantity });
+    console.log('HandleAddToCart called with:', { product, quantity, showSmartFeatures });
 
     try {
-      const userId = user?.id || 'user1'; // Use user from context
+      const userId = user?.id || 'user1';
+      const productName = product.item_name || product.name || 'Product';
       
-      // Test both item_name and item_id to see which one works
-      console.log('Attempting to add to cart:', {
-        userId: userId,
-        itemName: product.item_name,
-        itemId: product.item_id,
-        quantity: quantity || 1
-      });
-
-      // Try with item_name first (most likely to work)
-      let result = await addToCart(userId, product.item_name, quantity || 1);
-      console.log('Add to cart result (item_name):', result);
-      
-      // If that fails, try with item_id
-      if (!result.success) {
-        console.log('Trying with item_id instead...');
-        result = await addToCart(userId, product.item_id, quantity || 1);
-        console.log('Add to cart result (item_id):', result);
+      // Use smart cart features if enabled
+      let result;
+      if (showSmartFeatures) {
+        console.log('Using smart features - calling addToCartWithSuggestions');
+        result = await apiService.addToCartWithSuggestions(userId, productName, quantity || 1);
+      } else {
+        console.log('Using regular add to cart');
+        result = await addToCart(userId, productName, quantity || 1);
       }
       
+      console.log('Add to cart result:', result);
+      
       if (result.success) {
-        const productName = product.item_name || product.name || 'Product';
-        showSuccess(`${productName} added to cart!`);
+        let successMessage = `${productName} added to cart!`;
         
-        if (result.replacement) {
+        // Add smart feature messaging
+        if (result.hasReplacements || result.replacement) {
+          successMessage += ' Smart alternatives available!';
+        }
+        if (product.effective_discount > 0) {
+          successMessage += ` Save ${product.effective_discount}%!`;
+        }
+        
+        showSuccess(successMessage);
+        
+        // Handle replacement suggestions - check multiple possible formats
+        const hasReplacements = result.hasReplacements || result.replacement;
+        const replacements = result.replacements || (result.replacement ? [result.replacement] : []);
+        
+        console.log('Replacement check:', { hasReplacements, replacementsCount: replacements.length });
+        
+        if (hasReplacements && replacements.length > 0) {
+          console.log('Opening replacement modal with:', replacements[0]);
           setReplacementModal({
             isOpen: true,
             replacement: {
-              ...result.replacement,
-              original: product
+              ...replacements[0], // Show first replacement
+              original: product,
+              alternatives: replacements,
+              warning: result.warning,
+              incentive: result.incentive
             }
           });
+        } else {
+          console.log('No replacement suggestions to show');
         }
       } else {
-        // Handle replacement offers
+        // Handle replacement offers from backend (alternative format)
         if (result.replacement) {
+          console.log('Got replacement suggestion from failed add to cart:', result.replacement);
           setReplacementModal({
             isOpen: true,
             replacement: {
@@ -378,8 +418,135 @@ const Inventory = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Smart Features Controls */}
+            <div className="row align-items-center mt-3 pt-3 border-top">
+              <div className="col-md-3">
+                <div className="form-group">
+                  <label className="form-label">
+                    <Package size={16} className="mr-1" />
+                    View Mode
+                  </label>
+                  <select
+                    className="form-select"
+                    value={viewMode}
+                    onChange={(e) => {
+                      setViewMode(e.target.value);
+                      // Reload products when view mode changes
+                      setTimeout(loadProducts, 100);
+                    }}
+                  >
+                    <option value="grouped">Smart Grouped</option>
+                    <option value="individual">Individual Items</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="col-md-3">
+                <div className="form-group">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={showSmartFeatures}
+                      onChange={(e) => setShowSmartFeatures(e.target.checked)}
+                    />
+                    <span>🤖 Smart Features</span>
+                  </label>
+                  <small className="text-muted">AI-powered recommendations and replacements</small>
+                </div>
+              </div>
+              
+              <div className="col-md-2">
+                <div className="form-group">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={showDebug}
+                      onChange={(e) => setShowDebug(e.target.checked)}
+                    />
+                    <span>🐛 Debug</span>
+                  </label>
+                  <small className="text-muted">Show debug info</small>
+                </div>
+              </div>
+              
+              <div className="col-md-4">
+                <div className="smart-features-info">
+                  <small className="text-success">
+                    {viewMode === 'grouped' ? '✅ Using grouped inventory' : '📝 Showing individual items'} • 
+                    {showSmartFeatures ? ' 🤖 Smart features enabled' : ' 🔧 Basic mode'}
+                  </small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Debug Panel */}
+        {showDebug && (
+          <div className="card mb-4 border-warning">
+            <div className="card-header bg-warning text-dark">
+              <h6 className="mb-0">🐛 Debug Information</h6>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-4">
+                  <h6>Settings</h6>
+                  <ul className="list-unstyled small">
+                    <li>Smart Features: {showSmartFeatures ? '✅ Enabled' : '❌ Disabled'}</li>
+                    <li>View Mode: {viewMode}</li>
+                    <li>Total Products: {products.length}</li>
+                    <li>Filtered Products: {filteredProducts.length}</li>
+                  </ul>
+                </div>
+                <div className="col-md-4">
+                  <h6>Replacement Modal</h6>
+                  <ul className="list-unstyled small">
+                    <li>Modal Open: {replacementModal.isOpen ? '✅ Yes' : '❌ No'}</li>
+                    <li>Has Replacement: {replacementModal.replacement ? '✅ Yes' : '❌ No'}</li>
+                    {replacementModal.replacement && (
+                      <li>Replacement Item: {replacementModal.replacement.item_name || 'N/A'}</li>
+                    )}
+                  </ul>
+                </div>
+                <div className="col-md-4">
+                  <h6>Test Actions</h6>
+                  <button 
+                    className="btn btn-sm btn-warning mb-2"
+                    onClick={() => {
+                      console.log('Current state:', { 
+                        showSmartFeatures, 
+                        replacementModal, 
+                        products: products.length 
+                      });
+                    }}
+                  >
+                    Log State
+                  </button>
+                  <br />
+                  <button 
+                    className="btn btn-sm btn-info"
+                    onClick={() => {
+                      setReplacementModal({
+                        isOpen: true,
+                        replacement: {
+                          item_name: "Test Cheese",
+                          discounted_price: 4.99,
+                          days_until_expiry: 2,
+                          urgency_level: "warning",
+                          suggested_message: "This is a test replacement",
+                          original: { item_name: "Original Cheese", discounted_price: 5.99 }
+                        }
+                      });
+                    }}
+                  >
+                    Test Modal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Products Grid */}
         {loading ? (
@@ -407,6 +574,7 @@ const Inventory = () => {
                   key={product.item_id}
                   product={product}
                   onAddToCart={handleAddToCart}
+                  showSmartFeatures={showSmartFeatures}
                 />
               ))}
             </div>

@@ -32,12 +32,29 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
         </div>
         
         <div className="modal-body" style={modalBodyStyle}>
-          <div className="alert alert-warning mb-4">
-            <p>
-              <strong>Near-expiry alternative available!</strong> Save money and help reduce food waste 
-              with a discounted item that's still fresh but needs to be used soon.
-            </p>
-          </div>
+          {/* Smart messaging */}
+          {replacement.warning && (
+            <div className="alert alert-warning mb-3">
+              <AlertTriangle size={16} className="mr-2" />
+              <strong>{replacement.warning}</strong>
+            </div>
+          )}
+          
+          {replacement.incentive && (
+            <div className="alert alert-success mb-4">
+              <Package2 size={16} className="mr-2" />
+              <strong>{replacement.incentive}</strong>
+            </div>
+          )}
+          
+          {!replacement.warning && !replacement.incentive && (
+            <div className="alert alert-warning mb-4">
+              <p>
+                <strong>Better alternative available!</strong> Save money and help reduce food waste 
+                with a discounted item that's still fresh but needs to be used soon.
+              </p>
+            </div>
+          )}
 
           <div className="replacement-comparison" style={comparisonStyle}>
             {/* Original Item */}

@@ -170,9 +170,12 @@ def get_inventory():
             # Use new grouped inventory approach
             grouped_data = group_inventory_by_product()
             inventory = grouped_data['all_grouped']
-        else:
-            # Use original individual item approach for backward compatibility
+        elif CART_CLI_AVAILABLE:
+            # Use original individual item approach if cart_cli is available
             inventory = load_inventory()
+        else:
+            # Fallback: load directly from JSON file
+            inventory = load_inventory_fallback()
         
         # Filter by category if provided
         if category:
@@ -185,20 +188,137 @@ def get_inventory():
             cutoff = today + timedelta(days=2)
             inventory = [
                 item for item in inventory 
-                if datetime.strptime(item['expiry_date'], "%Y-%m-%d") <= cutoff
+                if datetime.strptime(item.get('expiry_date', '2099-12-31'), "%Y-%m-%d") <= cutoff
             ]
         
-        # Add calculated discount for each item
+        # Add calculated discount for each item and clean up the response
+        clean_inventory = []
         for item in inventory:
-            max_discount = item.get('discount', 0)
-            effective_discount = calculate_discount(item['expiry_date'], max_discount)
-            item['effective_discount'] = effective_discount
-            item['discounted_price'] = item['price_per_unit'] * (1 - effective_discount / 100)
+            try:
+                max_discount = item.get('discount', 0)
+                expiry_date = item.get('expiry_date', '2099-12-31')
+                effective_discount = calculate_discount(expiry_date, max_discount)
+                
+                price_per_unit = item.get('price_per_unit', 0)
+                if isinstance(price_per_unit, (int, float)):
+                    discounted_price = price_per_unit * (1 - effective_discount / 100)
+                else:
+                    discounted_price = 0
+                
+                # Calculate days until expiry for urgency display
+                from datetime import datetime
+                try:
+                    expiry_dt = datetime.strptime(expiry_date, "%Y-%m-%d")
+                    today = datetime.today()
+                    days_left = (expiry_dt - today).days
+                except:
+                    days_left = 999
+                
+                # Generate user-friendly cues and messages
+                user_cues = []
+                primary_message = ""
+                savings_message = ""
+                urgency_level = "normal"
+                
+                if days_left <= 0:
+                    primary_message = "⚠️ Expired - Remove immediately"
+                    user_cues.append("Item expired")
+                    urgency_level = "expired"
+                elif days_left <= 1:
+                    if days_left == 0:
+                        primary_message = "🚨 Expires today - Act now!"
+                    else:
+                        primary_message = "⚡ Expires tomorrow - Act fast!"
+                    user_cues.append("Act fast - expires soon")
+                    user_cues.append("Help reduce waste")
+                    user_cues.append("Maximum savings available")
+                    urgency_level = "critical"
+                    if effective_discount > 0:
+                        savings_message = f"Save {effective_discount:.0f}% • Help the planet"
+                elif days_left <= 3:
+                    primary_message = f"⏰ Act fast - expires in {days_left} days!"
+                    user_cues.append(f"Expires in {days_left} days")
+                    user_cues.append("Help reduce waste")
+                    if effective_discount > 0:
+                        user_cues.append("Earn bonus points")
+                        savings_message = f"Save {effective_discount:.0f}% • Earn rewards"
+                    urgency_level = "critical"
+                elif days_left <= 7:
+                    if effective_discount > 0:
+                        primary_message = "� Great deal - Still fresh!"
+                        user_cues.append("Still fresh")
+                        user_cues.append("Great savings")
+                        savings_message = f"Save {effective_discount:.0f}%"
+                    else:
+                        primary_message = "✨ Fresh and quality guaranteed"
+                        user_cues.append("Fresh & ready")
+                    urgency_level = "warning"
+                else:
+                    primary_message = "✨ AI will pick the freshest item for you"
+                    user_cues.append("Fresh & quality guaranteed")
+                    if grouped and GROUPING_AVAILABLE and item.get('total_variants', 1) > 1:
+                        user_cues.append("AI picks best option")
+                    urgency_level = "normal"
+                
+                # Add sustainability message for all discounted items
+                if effective_discount > 0:
+                    user_cues.append("Support sustainability")
+                
+                # Add environmental impact message based on discount level
+                if effective_discount > 30:
+                    user_cues.append("🌍 Big environmental impact!")
+                elif effective_discount > 10:
+                    user_cues.append("♻️ Reduce food waste")
+                
+                # Create clean item with only essential user-facing information
+                clean_item = {
+                    "item_id": item.get('item_id'),
+                    "item_name": item.get('item_name'),
+                    "category": item.get('category'),
+                    "price_per_unit": price_per_unit,
+                    "discounted_price": round(discounted_price, 2),
+                    "discount": effective_discount,
+                    "current_stock": item.get('current_stock', 0),
+                    "expiry_date": expiry_date,
+                    "days_left": days_left,
+                    "storage_type": item.get('storage_type'),
+                    "urgency": urgency_level,
+                    "user_cues": user_cues,
+                    "primary_message": primary_message,
+                    "savings_message": savings_message
+                }
+                
+                # Add grouping information only if grouped
+                if grouped and GROUPING_AVAILABLE:
+                    clean_item.update({
+                        "total_variants": item.get('total_variants', 1),
+                        "has_alternatives": item.get('near_expiry_count', 0) > 0
+                    })
+                
+                clean_inventory.append(clean_item)
+                
+            except Exception as e:
+                # If there's an error, create a minimal clean item
+                clean_item = {
+                    "item_id": item.get('item_id', 'unknown'),
+                    "item_name": item.get('item_name', 'Unknown Item'),
+                    "category": item.get('category', 'Other'),
+                    "price_per_unit": item.get('price_per_unit', 0),
+                    "discounted_price": item.get('price_per_unit', 0),
+                    "discount": 0,
+                    "current_stock": item.get('current_stock', 0),
+                    "expiry_date": item.get('expiry_date', '2099-12-31'),
+                    "days_left": 999,
+                    "storage_type": item.get('storage_type', 'ambient'),
+                    "urgency": "normal"
+                }
+                clean_inventory.append(clean_item)
+                print(f"Warning: Error processing item {item.get('item_id', 'unknown')}: {e}")
         
         return jsonify({
             "success": True,
-            "inventory": inventory,
-            "count": len(inventory),
+            "inventory": clean_inventory,
+            "count": len(clean_inventory),
             "grouped": grouped and GROUPING_AVAILABLE
         })
     except Exception as e:
@@ -209,14 +329,46 @@ def api_add_to_cart():
     """Add item to cart with replacement suggestion."""
     try:
         data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "No JSON data provided"}), 400
+        
+        # Validate required fields
+        required_fields = ['user_id', 'item_query', 'quantity']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+        
         user_id = data['user_id']
         item_query = data['item_query']
         quantity = data['quantity']
         
+        # Validate data types
+        if not isinstance(quantity, int) or quantity <= 0:
+            return jsonify({"success": False, "error": "Quantity must be a positive integer"}), 400
+        
+        if not user_id or not item_query:
+            return jsonify({"success": False, "error": "user_id and item_query cannot be empty"}), 400
+        
+        # Check if cart_cli functions are available
+        if not CART_CLI_AVAILABLE:
+            return jsonify({
+                "success": False, 
+                "error": "Cart functionality not available - cart_cli module not loaded"
+            }), 503
+        
         result = add_item_with_replacement(user_id, item_query, quantity)
         return jsonify(result)
+    except KeyError as e:
+        return jsonify({"success": False, "error": f"Missing required field: {str(e)}"}), 400
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({
+            "success": False, 
+            "error": f"Error adding to cart: {str(e)}",
+            "debug_info": {
+                "cart_cli_available": CART_CLI_AVAILABLE,
+                "request_data": data if 'data' in locals() else None
+            }
+        }), 500
 
 @app.route('/add_replacement_to_cart', methods=['POST'])
 def api_add_replacement_to_cart():
@@ -727,12 +879,17 @@ def api_enhanced_predict_shelf_life():
         
         if ML_AVAILABLE:
             # Use ML model for prediction
+            storage_type = data.get('storage_type', 'refrigerated')
+            
+            # Load sensor data from file if not provided in request
+            sensor_data = load_sensor_data(storage_type)
+            
             sample = {
                 "item_name": data['item_name'],
                 "category": data['category'],
-                "storage_type": data.get('storage_type', 'refrigerated'),
-                "current_temp_c": data.get('current_temp_c', 4.0),
-                "humidity": data.get('humidity', 0.85),
+                "storage_type": storage_type,
+                "current_temp_c": data.get('current_temp_c', sensor_data.get('current_temp_c', get_default_temp(storage_type))),
+                "humidity": data.get('humidity', sensor_data.get('humidity', get_default_humidity(storage_type))),
                 "price_per_unit": data.get('price_per_unit', 1.0),
                 "current_stock": data.get('current_stock', 10),
                 "sales_per_day": data.get('sales_per_day', 5)
@@ -919,6 +1076,136 @@ def health_check():
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         }), 500
+
+def load_sensor_data(storage_type=None):
+    """Load sensor data from JSON files.
+    
+    Args:
+        storage_type (str, optional): Specific storage type to get data for.
+                                    If None, returns all sensor data.
+    
+    Returns:
+        dict: Sensor data for the specified storage type or all data.
+    """
+    try:
+        # Try to load from current_sensors_data.json first (structured by storage type)
+        current_sensors_path = os.path.join(os.path.dirname(__file__), '..', 'mock_api', 'current_sensors_data.json')
+        if os.path.exists(current_sensors_path):
+            with open(current_sensors_path, 'r') as f:
+                sensor_data = json.load(f)
+            
+            if storage_type and storage_type in sensor_data:
+                return sensor_data[storage_type]
+            elif storage_type:
+                # If specific storage type not found, return default values
+                return get_default_sensor_data(storage_type)
+            else:
+                return sensor_data
+        
+        # Fallback to sensors_data.json (array format)
+        sensors_path = os.path.join(os.path.dirname(__file__), '..', 'mock_api', 'sensors_data.json')
+        if os.path.exists(sensors_path):
+            with open(sensors_path, 'r') as f:
+                sensor_data = json.load(f)
+            
+            if storage_type:
+                # Find data for specific storage type
+                for sensor in sensor_data:
+                    if sensor.get('storage_type') == storage_type:
+                        return {
+                            'current_temp_c': sensor.get('current_temp_c', get_default_temp(storage_type)),
+                            'humidity': sensor.get('humidity', get_default_humidity(storage_type)),
+                            'timestamp': sensor.get('timestamp')
+                        }
+                # If not found, return defaults
+                return get_default_sensor_data(storage_type)
+            else:
+                return sensor_data
+        
+        # If no files found, return defaults
+        if storage_type:
+            return get_default_sensor_data(storage_type)
+        else:
+            return {
+                'refrigerated': get_default_sensor_data('refrigerated'),
+                'ambient': get_default_sensor_data('ambient'),
+                'frozen': get_default_sensor_data('frozen')
+            }
+            
+    except Exception as e:
+        print(f"Error loading sensor data: {e}")
+        # Return default values if file loading fails
+        if storage_type:
+            return get_default_sensor_data(storage_type)
+        else:
+            return {
+                'refrigerated': get_default_sensor_data('refrigerated'),
+                'ambient': get_default_sensor_data('ambient'),
+                'frozen': get_default_sensor_data('frozen')
+            }
+
+def get_default_temp(storage_type):
+    """Get default temperature for storage type."""
+    defaults = {
+        'refrigerated': 4.0,
+        'frozen': -18.0,
+        'ambient': 21.0
+    }
+    return defaults.get(storage_type, 21.0)
+
+def get_default_humidity(storage_type):
+    """Get default humidity for storage type."""
+    defaults = {
+        'refrigerated': 0.85,
+        'frozen': 0.40,
+        'ambient': 0.60
+    }
+    return defaults.get(storage_type, 0.60)
+
+def get_default_sensor_data(storage_type):
+    """Get default sensor data for a storage type."""
+    return {
+        'current_temp_c': get_default_temp(storage_type),
+        'humidity': get_default_humidity(storage_type),
+        'timestamp': datetime.now().isoformat()
+    }
+
+def load_inventory_fallback():
+    """Fallback function to load inventory directly from JSON file."""
+    try:
+        # Try to load from current_walmart_inventory.json
+        inventory_file = os.path.join(BASE_DIR, "mock_api", "current_walmart_inventory.json")
+        if os.path.exists(inventory_file):
+            with open(inventory_file, 'r') as f:
+                data = json.load(f)
+                return data.get('inventory', [])
+        
+        # Try alternative inventory file locations
+        alternative_paths = [
+            os.path.join(BASE_DIR, "models", "walmart_inventory.json"),
+            os.path.join(BASE_DIR, "models", "data", "walmart_inventory.json"),
+            os.path.join(BASE_DIR, "mock_api", "walmart_inventory.json")
+        ]
+        
+        for path in alternative_paths:
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    # Handle different JSON structures
+                    if isinstance(data, list):
+                        return data
+                    elif isinstance(data, dict) and 'inventory' in data:
+                        return data['inventory']
+                    else:
+                        return []
+        
+        # If no files found, return empty list
+        print("Warning: No inventory files found, returning empty inventory")
+        return []
+        
+    except Exception as e:
+        print(f"Error loading inventory fallback: {e}")
+        return []
 
 if __name__ == '__main__':
     print("\n" + "="*60)

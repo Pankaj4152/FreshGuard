@@ -1,17 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Calendar, 
   Package, 
   AlertTriangle, 
   ShoppingCart,
   Clock,
-  Star
+  Star,
+  Zap,
+  Leaf
 } from 'lucide-react';
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
+  const [loading, setLoading] = useState(false);
+  
   if (!product) return null;
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -19,8 +23,16 @@ const ProductCard = ({ product, onAddToCart }) => {
       return;
     }
     
-    // Pass the product and quantity to the parent handler
-    onAddToCart(product, 1);
+    setLoading(true);
+    
+    try {
+      // Pass the product and quantity to the parent handler
+      await onAddToCart(product, 1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getProductIcon = (category) => {
@@ -90,18 +102,47 @@ const ProductCard = ({ product, onAddToCart }) => {
   // Check if this is a grouped product
   const isGrouped = product.total_variants > 1;
   const hasNearExpiry = product.has_near_expiry || false;
+  
+  // Smart feature indicators
+  const hasSustainabilityBenefit = hasDiscount || expiryStatus.status === 'warning' || expiryStatus.status === 'critical';
+  const isRecommended = product.is_recommended || product.freshness_score > 0.8;
+  const hasSmartPricing = product.effective_discount !== product.discount;
+  const isUrgent = expiryStatus.status === 'critical';
+  const isNearExpiry = expiryStatus.status === 'warning';
 
   return (
-    <div className="product-card">
+    <div className={`product-card ${isUrgent ? 'urgent' : ''} ${isRecommended ? 'recommended' : ''}`}>
       <div className="product-image">
         <span style={{ fontSize: '3rem' }}>
           {getProductIcon(product.category)}
         </span>
-        {hasDiscount && (
-          <div className="discount-badge">
-            {discountPercent}% OFF
-          </div>
-        )}
+        
+        {/* Smart feature badges */}
+        <div className="product-badges">
+          {hasDiscount && (
+            <div className="discount-badge">
+              {discountPercent}% OFF
+            </div>
+          )}
+          {isUrgent && (
+            <div className="urgency-badge">
+              <Zap size={12} />
+              Urgent
+            </div>
+          )}
+          {hasSustainabilityBenefit && !isUrgent && (
+            <div className="sustainability-badge">
+              <Leaf size={12} />
+              Save Food
+            </div>
+          )}
+          {isRecommended && (
+            <div className="recommended-badge">
+              <Star size={12} />
+              Best Pick
+            </div>
+          )}
+        </div>
       </div>
       
       <div className="product-info">
@@ -177,20 +218,37 @@ const ProductCard = ({ product, onAddToCart }) => {
           <button 
             className={`btn btn-primary btn-add-to-cart ${
               (product.current_stock || 0) <= 0 ? 'btn-disabled' : ''
-            }`}
+            } ${loading ? 'btn-loading' : ''}`}
             onClick={handleAddToCart}
-            disabled={(product.current_stock || 0) <= 0}
+            disabled={(product.current_stock || 0) <= 0 || loading}
             title={isGrouped ? "We'll select the freshest available item for you" : "Add to cart"}
           >
             <ShoppingCart size={16} />
-            {(product.current_stock || 0) <= 0 ? 'Out of Stock' : 
-             isGrouped ? 'Add Fresh Item' : 'Add to Cart'}
+            {loading ? 'Adding...' : 
+             (product.current_stock || 0) <= 0 ? 'Out of Stock' : 
+             isGrouped ? 'Add Fresh Item' : 
+             hasSustainabilityBenefit ? 'Save & Add' : 'Add to Cart'}
           </button>
           
-          {expiryStatus.status === 'critical' && (product.current_stock || 0) > 0 && (
+          {/* Smart messaging */}
+          {showSmartFeatures && hasSustainabilityBenefit && (
+            <div className="sustainability-message">
+              <Leaf size={12} />
+              <span>Help reduce waste • Earn bonus points</span>
+            </div>
+          )}
+          
+          {isUrgent && (product.current_stock || 0) > 0 && (
             <div className="urgent-notice">
               <AlertTriangle size={14} />
-              <span>Quick Buy - Limited Time!</span>
+              <span>Act fast - expires in {getDaysUntilExpiry(product.expiry_date)} day{getDaysUntilExpiry(product.expiry_date) !== 1 ? 's' : ''}!</span>
+            </div>
+          )}
+          
+          {isGrouped && showSmartFeatures && (
+            <div className="smart-selection-notice">
+              <Zap size={12} />
+              <span>AI will pick the freshest item for you</span>
             </div>
           )}
         </div>

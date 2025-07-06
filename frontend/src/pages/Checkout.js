@@ -100,6 +100,20 @@ const Checkout = () => {
           });
         }
         
+        // Update impact dashboard on backend
+        try {
+          await apiService.updateImpactDashboard(user?.id || 'user1', {
+            total_food_saved: response.environmental_impact?.food_saved_kg || orderSummary.foodSaved,
+            total_money_saved: response.total_value || orderSummary.totalDiscount,
+            total_co2_reduced: response.environmental_impact?.co2_saved_kg || 0,
+            total_items: response.environmental_impact?.items_rescued || orderSummary.totalItems,
+            total_orders: 1,
+            total_loyalty_points: response.points_earned || orderSummary.loyaltyPointsEarned
+          }, 'add');
+        } catch (dashError) {
+          console.warn('Failed to update impact dashboard:', dashError);
+        }
+        
         showSuccess(`Order placed successfully! ${response.points_earned || orderSummary.loyaltyPointsEarned} loyalty points earned!`);
         
         // Clear cart after successful checkout

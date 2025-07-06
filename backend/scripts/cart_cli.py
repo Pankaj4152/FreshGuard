@@ -8,12 +8,32 @@ import os
 import sys
 import json
 from datetime import datetime
-from cart_manage import (
-    add_item_to_cart, remove_item_from_cart, clear_cart,
-    get_cart_summary, get_cart, add_loyalty_points,
-    load_loyalty_points, checkout_cart
-)
-from replacement_utils import get_replacement_suggestions
+
+# Add current directory to path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+try:
+    from cart_manage import (
+        add_item_to_cart, remove_item_from_cart, clear_cart,
+        get_cart_summary, get_cart, add_loyalty_points,
+        load_loyalty_points, checkout_cart
+    )
+    CART_MANAGE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: cart_manage not available: {e}")
+    CART_MANAGE_AVAILABLE = False
+
+try:
+    from replacement_utils import get_replacement_suggestions
+    REPLACEMENT_UTILS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: replacement_utils not available: {e}")
+    REPLACEMENT_UTILS_AVAILABLE = False
+    
+    def get_replacement_suggestions(item_name, threshold=5):
+        return []
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INVENTORY_FILE = os.path.join(BASE_DIR, "mock_api", "current_walmart_inventory.json")
@@ -138,3 +158,132 @@ if __name__ == "__main__":
                 break
             else:
                 print("Unknown command.")
+
+def add_item_with_replacement(user_id, item_query, quantity):
+    """Add item to cart with replacement suggestions if the item is near expiry."""
+    try:
+        # Find the item in inventory
+        item = find_item_in_inventory(item_query)
+        if not item:
+            return {
+                "success": False,
+                "error": f"Item '{item_query}' not found in inventory"
+            }
+        
+        # Check if cart_manage functions are available
+        if not CART_MANAGE_AVAILABLE:
+            return {
+                "success": False,
+                "error": "Cart management functions not available"
+            }
+        
+        # Add item to cart
+        result = add_item_to_cart(
+            user_id=user_id,
+            item_id=item['item_id'],
+            item_name=item['item_name'],
+            quantity=quantity,
+            price_per_unit=item['price_per_unit']
+        )
+        
+        if not result.get('success'):
+            return result
+        
+        # Check if item is near expiry and provide replacement suggestions
+        try:
+            from datetime import datetime, timedelta
+            expiry_date = datetime.strptime(item['expiry_date'], "%Y-%m-%d")
+            today = datetime.today()
+            days_left = (expiry_date - today).days
+            
+            if days_left <= 5:  # Near expiry
+                replacements = []
+                if REPLACEMENT_UTILS_AVAILABLE:
+                    replacements = get_replacement_suggestions(item['item_name'])
+                
+                result['warning'] = f"Item expires in {days_left} days"
+                result['replacements'] = replacements
+                result['message'] = "Item added to cart. Consider fresher alternatives."
+            else:
+                result['message'] = "Item added to cart successfully"
+        except Exception as e:
+            # If date parsing fails, just add to cart without replacement suggestions
+            result['message'] = "Item added to cart successfully"
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error adding item to cart: {str(e)}"
+        }
+
+def add_replacement_item(user_id, replacement_item, quantity):
+    """Add a replacement item to cart."""
+    try:
+        if not CART_MANAGE_AVAILABLE:
+            return {
+                "success": False,
+                "error": "Cart management functions not available"
+            }
+        
+        # If replacement_item is a dict (full item info), use it directly
+        if isinstance(replacement_item, dict):
+            item = replacement_item
+        else:
+            # If it's a string, find the item in inventory
+            item = find_item_in_inventory(replacement_item)
+            if not item:
+                return {
+                    "success": False,
+                    "error": f"Replacement item '{replacement_item}' not found"
+                }
+        
+        result = add_item_to_cart(
+            user_id=user_id,
+            item_id=item['item_id'],
+            item_name=item['item_name'],
+            quantity=quantity,
+            price_per_unit=item['price_per_unit']
+        )
+        
+        if result.get('success'):
+            result['message'] = "Replacement item added to cart successfully"
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error adding replacement item: {str(e)}"
+        }
+
+def calculate_discount(expiry_date, max_discount=50):
+    """Calculate discount based on days until expiry."""
+    try:
+        from datetime import datetime
+        expiry_dt = datetime.strptime(expiry_date, "%Y-%m-%d")
+        today = datetime.today()
+        days_left = (expiry_dt - today).days
+        
+        if days_left <= 0:
+            return max_discount  # Max discount for expired items
+        elif days_left <= 2:
+            return max_discount * 0.8  # 80% of max discount
+        elif days_left <= 5:
+            return max_discount * 0.5  # 50% of max discount
+        else:
+            return 0  # No discount for fresh items
+    except:
+        return 0
+
+def calculate_loyalty_points(cart):
+    """Calculate loyalty points for cart items."""
+    try:
+        if isinstance(cart, dict):
+            total_items = sum(item.get('quantity', 0) for item in cart.values())
+        else:
+            total_items = len(cart)
+        return total_items  # 1 point per item
+    except:
+        return 0

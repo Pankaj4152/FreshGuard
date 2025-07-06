@@ -445,17 +445,62 @@ def find_best_item_for_cart(product_name, inventory_items, today=None, threshold
 def find_near_expiry_replacements(product_name, inventory_items, today=None, thresholds=None):
     """
     Find all items with days_until_expiry < min_days_for_cart.
-    Returns: list of items (dicts)
+    Returns: list of enhanced items (dicts) with replacement metadata
     """
     if today is None:
         today = datetime.now().date()
     if thresholds is None:
         thresholds = get_product_thresholds(product_name)
     min_days = thresholds["min_days_for_cart"]
-    return [
-        item for item in inventory_items
-        if 0 <= days_until_expiry(item['expiry_date']) < min_days
-    ]
+    
+    replacements = []
+    for item in inventory_items:
+        days_left = days_until_expiry(item['expiry_date'])
+        if 0 <= days_left < min_days:
+            # Enhance replacement with additional metadata
+            enhanced_item = item.copy()
+            enhanced_item['days_until_expiry'] = days_left
+            enhanced_item['replacement_type'] = 'near_expiry'
+            
+            # Add urgency level
+            if days_left <= 1:
+                enhanced_item['urgency_level'] = 'critical'
+                enhanced_item['suggested_message'] = "Expires today or tomorrow - Buy only if you can use immediately"
+            elif days_left <= 2:
+                enhanced_item['urgency_level'] = 'critical'
+                enhanced_item['suggested_message'] = "Expires within 2 days - Buy only if you can use it quickly"
+            elif days_left <= 5:
+                enhanced_item['urgency_level'] = 'warning'
+                enhanced_item['suggested_message'] = "Expiring soon - Consider if you can use it within a few days"
+            else:
+                enhanced_item['urgency_level'] = 'low'
+                enhanced_item['suggested_message'] = "Good alternative option"
+            
+            # Calculate effective discount
+            max_discount = item.get('max_discount', 0)
+            if days_left <= 1:
+                enhanced_item['effective_discount'] = max_discount
+            elif days_left <= 2:
+                enhanced_item['effective_discount'] = max_discount * 0.8
+            elif days_left <= 5:
+                enhanced_item['effective_discount'] = max_discount * 0.5
+            else:
+                enhanced_item['effective_discount'] = 0
+            
+            # Calculate discounted price
+            price = item.get('price_per_unit', 0)
+            discount_percent = enhanced_item['effective_discount']
+            enhanced_item['discounted_price'] = price * (1 - discount_percent / 100)
+            
+            # Mark as replacement
+            enhanced_item['is_replacement'] = True
+            
+            replacements.append(enhanced_item)
+    
+    # Sort by urgency (critical first) then by days until expiry
+    replacements.sort(key=lambda x: (x['urgency_level'] == 'critical', -x['days_until_expiry']))
+    
+    return replacements
 
 def suggest_cart_and_replacements(product_name, inventory_items):
     """
@@ -483,13 +528,27 @@ def get_inventory_items_for_product(product_name, inventory_file=None):
         return []
     try:
         with open(inventory_file, 'r') as f:
-            inventory = json.load(f)
+            data = json.load(f)
+        
+        # Handle different JSON structures
+        if isinstance(data, dict) and 'inventory' in data:
+            inventory = data['inventory']
+        elif isinstance(data, list):
+            inventory = data
+        else:
+            print(f"Unexpected inventory structure: {type(data)}")
+            return []
+        
         # Normalize product name for case-insensitive match
         product_name_lower = product_name.lower()
-        return [
+        matching_items = [
             item for item in inventory
             if item.get("item_name", "").lower() == product_name_lower
         ]
+        
+        print(f"Found {len(matching_items)} items for product '{product_name}'")
+        return matching_items
+        
     except Exception as e:
         print(f"Error loading inventory for {product_name}: {e}")
         return []

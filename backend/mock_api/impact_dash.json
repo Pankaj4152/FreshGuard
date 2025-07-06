@@ -1,10 +1,10 @@
 {
   "user1": {
-    "total_food_saved": 5,
-    "total_money_saved": 2,
-    "total_co2_reduced": 0,
-    "total_loyalty_points": 3,
-    "total_orders": 0,
-    "total_items": 0
+    "total_food_saved": 8.5,
+    "total_money_saved": 29.93,
+    "total_co2_reduced": 8.75,
+    "total_loyalty_points": 27,
+    "total_orders": 2,
+    "total_items": 7
   }
 }

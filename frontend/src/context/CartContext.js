@@ -51,20 +51,24 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Call the backend API - FIX: Use correct parameter name
-      const response = await apiService.addToCart(userId, itemQuery, quantity);
+      // Use smart cart features for better UX
+      const response = await apiService.addToCartWithSuggestions(userId, itemQuery, quantity);
       
       if (response.success) {
         // Reload cart to get updated data
         await loadCart();
         return response;
       } else {
-        // Handle replacement offers
-        if (response.replacement) {
+        // Handle replacement offers and smart suggestions
+        if (response.replacement || response.hasReplacements) {
           return {
             success: false,
             message: response.message,
             replacement: response.replacement,
+            replacements: response.replacements,
+            hasReplacements: response.hasReplacements,
+            warning: response.warning,
+            incentive: response.incentive,
             original: response.original
           };
         }
@@ -73,8 +77,17 @@ export const CartProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      setError(error.message);
-      return { success: false, error: error.message };
+      // Fallback to regular add to cart
+      try {
+        const fallbackResponse = await apiService.addToCart(userId, itemQuery, quantity);
+        if (fallbackResponse.success) {
+          await loadCart();
+        }
+        return fallbackResponse;
+      } catch (fallbackError) {
+        setError(fallbackError.message);
+        return { success: false, error: fallbackError.message };
+      }
     } finally {
       setLoading(false);
     }

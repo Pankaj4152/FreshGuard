@@ -61,30 +61,41 @@ const Home = () => {
 
     try {
       const userId = user?.id || 'user1'; // Use user from context
+      const productName = product.item_name || product.name || 'Product';
       
-      // Use the same logic as Inventory page for consistency
-      console.log('Attempting to add to cart:', {
-        userId: userId,
-        itemName: product.item_name,
-        itemId: product.item_id,
-        quantity: quantity || 1
-      });
-
-      // Try with item_name first (most likely to work)
-      let result = await addToCart(userId, product.item_name, quantity || 1);
-      console.log('Add to cart result (item_name):', result);
-      
-      // If that fails, try with item_id
-      if (!result.success) {
-        console.log('Trying with item_id instead...');
-        result = await addToCart(userId, product.item_id, quantity || 1);
-        console.log('Add to cart result (item_id):', result);
-      }
+      // Use smart cart features for better UX
+      const result = await apiService.addToCartWithSuggestions(userId, productName, quantity || 1);
+      console.log('Smart add to cart result:', result);
       
       if (result.success) {
         const productName = product.item_name || product.name || 'Product';
-        showSuccess(`${productName} added to cart!`);
+        let successMessage = `${productName} added to cart!`;
         
+        // Add smart feature messaging
+        if (result.hasReplacements) {
+          successMessage += ' Check out smart alternatives!';
+        }
+        if (product.effective_discount > 0) {
+          successMessage += ` You're saving ${product.effective_discount}%!`;
+        }
+        
+        showSuccess(successMessage);
+        
+        // Handle replacement suggestions
+        if (result.hasReplacements && result.replacements?.length > 0) {
+          setReplacementModal({
+            isOpen: true,
+            replacement: {
+              ...result.replacements[0], // Show first replacement
+              original: product,
+              alternatives: result.replacements,
+              warning: result.warning,
+              incentive: result.incentive
+            }
+          });
+        }
+      } else {
+        // Handle replacement offers from backend
         if (result.replacement) {
           setReplacementModal({
             isOpen: true,
@@ -93,9 +104,9 @@ const Home = () => {
               original: product
             }
           });
+        } else {
+          showError(result.message || 'Failed to add item to cart');
         }
-      } else {
-        showError(result.message || 'Failed to add item to cart');
       }
       
       return result;
@@ -259,6 +270,7 @@ const Home = () => {
                   key={product.item_id}
                   product={product}
                   onAddToCart={handleAddToCart}
+                  showSmartFeatures={true}
                 />
               ))}
             </div>

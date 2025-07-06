@@ -63,10 +63,18 @@ const Dashboard = () => {
       // Refresh user data first
       await refreshUserData();
       
-      const [impactResponse, loyaltyResponse] = await Promise.all([
-        apiService.getUserImpact(user?.id || 'user1'),
-        apiService.getLoyaltyPoints(user?.id || 'user1')
+      // Test enhanced API features
+      const userId = user?.id || 'user1';
+      const [impactResponse, loyaltyResponse, healthResponse] = await Promise.all([
+        apiService.getUserImpact(userId),
+        apiService.getLoyaltyPoints(userId),
+        apiService.detailedHealthCheck().catch(() => ({ success: false })) // Optional
       ]);
+      
+      // Log API health for debugging
+      if (healthResponse.success) {
+        console.log('API Health:', healthResponse.features);
+      }
       
       if (impactResponse.success && impactResponse.impact) {
         const impact = impactResponse.impact;
@@ -76,7 +84,7 @@ const Dashboard = () => {
           moneySaved: impact.money_saved || 0,
           loyaltyPoints: loyaltyResponse.success ? loyaltyResponse.points : impact.loyalty_points || 0,
           co2Reduced: impact.co2_saved_kg || 0,
-          ordersCompleted: Math.floor((impact.items_saved || 0) / 3) || 0,
+          ordersCompleted: impact.total_orders || Math.floor((impact.items_saved || 0) / 3) || 0,
           rank: getRankFromPoints(loyaltyResponse.success ? loyaltyResponse.points : impact.loyalty_points || 0)
         }));
       }

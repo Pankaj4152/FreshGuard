@@ -100,7 +100,6 @@ def group_inventory_by_product(inventory=None, near_expiry_threshold=5):
             'storage_type': best_item['storage_type'],
             'arrival_date': best_item['arrival_date'],
             'shelf_life_days': best_item['shelf_life_days'],
-            'current_temp_c': best_item['current_temp_c'],
             'discount': best_item.get('discount', 0),
             'effective_discount': best_item.get('effective_discount', 0),
             'discounted_price': best_item.get('discounted_price', best_item['price_per_unit']),

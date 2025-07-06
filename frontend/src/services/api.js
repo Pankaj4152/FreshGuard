@@ -167,6 +167,11 @@ class ApiService {
     return this.request('/');
   }
 
+  // Enhanced health check
+  async detailedHealthCheck() {
+    return this.request('/health');
+  }
+
   // Inventory operations
   async getInventory(params = {}) {
     let endpoint = '/get_inventory';
@@ -253,6 +258,179 @@ class ApiService {
   calculateDiscount(originalPrice, discountedPrice) {
     if (!originalPrice || !discountedPrice || originalPrice <= discountedPrice) return 0;
     return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100);
+  }
+
+  // Missing API endpoints - Smart Features
+  async getGroupedInventory(nearExpiryThreshold = 5) {
+    const result = await this.request(`/get_grouped_inventory?near_expiry_threshold=${nearExpiryThreshold}`);
+    
+    // Ensure proper response structure
+    if (result.success) {
+      result.inventory = result.all_grouped || result.inventory || [];
+      result.isGrouped = result.grouping_enabled || false;
+    }
+    
+    return result;
+  }
+
+  async suggestReplacements(productName, nearExpiryThreshold = 5) {
+    return this.request('/suggest_replacements', {
+      method: 'POST',
+      body: JSON.stringify({
+        product_name: productName,
+        near_expiry_threshold: nearExpiryThreshold
+      }),
+    });
+  }
+
+  async suggestCartItem(productName) {
+    return this.request('/suggest_cart_item', {
+      method: 'POST',
+      body: JSON.stringify({
+        product_name: productName
+      }),
+    });
+  }
+
+  async findFreshestItem(productName, minDaysThreshold = 3) {
+    return this.request('/find_freshest_item', {
+      method: 'POST',
+      body: JSON.stringify({
+        product_name: productName,
+        min_days_threshold: minDaysThreshold
+      }),
+    });
+  }
+
+  async getInventoryItemsForProduct(productName) {
+    return this.request(`/inventory_items_for_product?product_name=${encodeURIComponent(productName)}`);
+  }
+
+  async calculateDaysUntilExpiry(expiryDate) {
+    return this.request('/days_until_expiry', {
+      method: 'POST',
+      body: JSON.stringify({
+        expiry_date: expiryDate
+      }),
+    });
+  }
+
+  // Enhanced ML predictions
+  async enhancedPredictShelfLife(itemData) {
+    return this.request('/enhanced_predict_shelf_life', {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  // Impact dashboard operations
+  async updateImpactDashboard(userId, metrics, updateType = 'add') {
+    return this.request('/update_impact_dash', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        update_type: updateType,
+        ...metrics
+      }),
+    });
+  }
+
+  async addLoyaltyPoints(userId, points) {
+    return this.request('/add_loyalty_points', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        points: points
+      }),
+    });
+  }
+
+  // Product threshold operations
+  async loadProductThresholds() {
+    return this.request('/load_product_thresholds');
+  }
+
+  async getProductThreshold(productName) {
+    return this.request(`/get_product_threshold?product_name=${encodeURIComponent(productName)}`);
+  }
+
+  // Testing and debugging
+  async testFunctions(userId) {
+    return this.request('/test_functions', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId
+      }),
+    });
+  }
+
+  // Smart cart operations with replacement handling
+  async addToCartWithSuggestions(userId, productName, quantity) {
+    try {
+      console.log('addToCartWithSuggestions called with:', { userId, productName, quantity });
+      
+      // First, try to add to cart directly - this might return replacement suggestions
+      const addResult = await this.addToCart(userId, productName, quantity);
+      console.log('Direct add to cart result:', addResult);
+      
+      // Check if backend returned replacement suggestions in the response
+      if (addResult.replacement) {
+        console.log('Replacement suggestion found in add_to_cart response');
+        return {
+          ...addResult,
+          hasReplacements: true,
+          replacements: [addResult.replacement], // Convert single replacement to array
+          replacement: addResult.replacement // Keep original for compatibility
+        };
+      }
+      
+      // If no replacement in add_to_cart response, try getting suggestions separately
+      if (addResult.success) {
+        console.log('Item added successfully, checking for alternative suggestions...');
+        const suggestion = await this.suggestCartItem(productName);
+        console.log('Suggestion result:', suggestion);
+        
+        if (suggestion.success && suggestion.replacements && suggestion.replacements.length > 0) {
+          console.log(`Found ${suggestion.replacements.length} replacement suggestions`);
+          return {
+            ...addResult,
+            hasReplacements: true,
+            replacements: suggestion.replacements,
+            warning: suggestion.warning,
+            incentive: suggestion.incentive
+          };
+        }
+      }
+      
+      return addResult;
+    } catch (error) {
+      console.error('Error in smart cart operation:', error);
+      // Fallback to regular add to cart
+      return await this.addToCart(userId, productName, quantity);
+    }
+  }
+
+  // Enhanced replacement handling
+  async getReplacementSuggestions(productName, nearExpiryThreshold = 5) {
+    try {
+      const result = await this.suggestReplacements(productName, nearExpiryThreshold);
+      
+      if (result.success && result.replacements) {
+        // Enhance replacement data with additional info
+        for (let replacement of result.replacements) {
+          if (replacement.expiry_date) {
+            const daysLeft = this.getDaysUntilExpiry(replacement.expiry_date);
+            replacement.days_until_expiry = daysLeft;
+            replacement.urgency_level = daysLeft <= 2 ? 'critical' : daysLeft <= 5 ? 'warning' : 'safe';
+          }
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting replacement suggestions:', error);
+      return { success: false, error: error.message, replacements: [] };
+    }
   }
 }
 
