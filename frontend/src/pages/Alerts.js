@@ -120,6 +120,10 @@ const Alerts = () => {
   };
 
   const getExpiryStatus = (expiryDate) => {
+    if (!apiService.getDaysUntilExpiry) {
+      return { status: 'unknown', text: 'Unknown', color: 'secondary' };
+    }
+    
     const days = apiService.getDaysUntilExpiry(expiryDate);
     
     if (days <= 0) return { status: 'critical', text: 'Expired', color: 'danger' };

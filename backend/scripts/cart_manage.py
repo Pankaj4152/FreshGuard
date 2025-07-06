@@ -733,3 +733,39 @@ def get_product_impact_preview(item_name, quantity=1, category=None):
         "estimated_points": calculate_loyalty_points_from_impact(impact)
     }
 
+def load_impact_dash_data(file_path=LOYALTY_FILE):
+    """Load impact dash data from JSON file."""
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                return json.load(f)
+        else:
+            return {}
+    except Exception as e:
+        print(f"Error loading impact dash data: {e}")
+        return {}
+
+
+def get_user_impact_data(user_id, file_path=LOYALTY_FILE):
+    """Get a specific user's impact data."""
+    try:
+        data = load_impact_dash_data(file_path)
+        return data.get(user_id, {
+            "total_food_saved": 0,
+            "total_money_saved": 0,
+            "total_co2_reduced": 0,
+            "total_loyalty_points": 0,
+            "total_orders": 0,
+            "total_items": 0
+        })
+    except Exception as e:
+        print(f"Error getting user impact data for {user_id}: {e}")
+        return {
+            "total_food_saved": 0,
+            "total_money_saved": 0,
+            "total_co2_reduced": 0,
+            "total_loyalty_points": 0,
+            "total_orders": 0,
+            "total_items": 0
+        }
+

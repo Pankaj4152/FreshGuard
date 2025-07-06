@@ -18,8 +18,12 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, userImpact, refreshUserData } = useUser();
+  const { user, userImpact } = useUser(); // Remove refreshUserData dependency  
   const { showError, ToastContainer } = useToast();
+  
+  // Debug log
+  console.log('Dashboard component - user:', user);
+  console.log('Dashboard component - userImpact:', userImpact);
   
   const [loading, setLoading] = useState(true);
   const [impactData, setImpactData] = useState({
@@ -37,77 +41,162 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
+    // Always load dashboard data on mount
     loadDashboardData();
   }, []);
 
-  // Refresh dashboard when userImpact changes
+  // Update dashboard when userImpact changes from UserContext
   useEffect(() => {
-    if (userImpact) {
+    if (userImpact && Object.keys(userImpact).length > 0) {
+      console.log('Updating dashboard from userImpact:', userImpact);
       setImpactData(prev => ({
         ...prev,
-        foodSaved: userImpact.food_saved_kg || 0,
-        moneySaved: userImpact.money_saved || 0,
-        loyaltyPoints: userImpact.loyalty_points || user?.loyaltyPoints || 0,
-        co2Reduced: userImpact.co2_saved_kg || 0,
-        ordersCompleted: Math.floor((userImpact.items_saved || 0) / 3) || 0, // Estimate orders
-        rank: getRankFromPoints(userImpact.loyalty_points || user?.loyaltyPoints || 0)
+        foodSaved: userImpact.food_saved_kg || prev.foodSaved || 0,
+        moneySaved: userImpact.money_saved || prev.moneySaved || 0,
+        loyaltyPoints: userImpact.loyalty_points || user?.loyaltyPoints || prev.loyaltyPoints || 0,
+        co2Reduced: userImpact.co2_saved_kg || prev.co2Reduced || 0,
+        ordersCompleted: Math.floor((userImpact.items_saved || 0) / 3) || prev.ordersCompleted || 0,
+        rank: getRankFromPoints(userImpact.loyalty_points || user?.loyaltyPoints || prev.loyaltyPoints || 0)
       }));
     }
   }, [userImpact, user]);
 
+  // Also update when user data changes
+  useEffect(() => {
+    if (user?.loyaltyPoints !== undefined) {
+      setImpactData(prev => ({
+        ...prev,
+        loyaltyPoints: user.loyaltyPoints,
+        rank: getRankFromPoints(user.loyaltyPoints)
+      }));
+    }
+  }, [user?.loyaltyPoints]);
+
   const loadDashboardData = async () => {
+    console.log('🔄 Starting dashboard data load...');
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      
-      // Refresh user data first
-      await refreshUserData();
-      
-      // Test enhanced API features
+      // Test enhanced API features  
       const userId = user?.id || 'user1';
-      const [impactResponse, loyaltyResponse, healthResponse] = await Promise.all([
-        apiService.getUserImpact(userId),
-        apiService.getLoyaltyPoints(userId),
-        apiService.detailedHealthCheck().catch(() => ({ success: false })) // Optional
-      ]);
+      console.log('📊 Loading dashboard data for user:', userId);
       
-      // Log API health for debugging
-      if (healthResponse.success) {
-        console.log('API Health:', healthResponse.features);
+      // Load data with individual error handling
+      let impactResponse = null;
+      let loyaltyResponse = null;
+      
+      try {
+        console.log('🎯 Calling getUserImpact...');
+        impactResponse = await apiService.getUserImpact(userId);
+        console.log('✅ Impact API Response:', impactResponse);
+      } catch (err) {
+        console.error('❌ Impact API error:', err);
+        impactResponse = { success: false, error: err.message };
       }
       
-      if (impactResponse.success && impactResponse.impact) {
-        const impact = impactResponse.impact;
-        setImpactData(prev => ({
-          ...prev,
-          foodSaved: impact.food_saved_kg || 0,
-          moneySaved: impact.money_saved || 0,
-          loyaltyPoints: loyaltyResponse.success ? loyaltyResponse.points : impact.loyalty_points || 0,
-          co2Reduced: impact.co2_saved_kg || 0,
-          ordersCompleted: impact.total_orders || Math.floor((impact.items_saved || 0) / 3) || 0,
-          rank: getRankFromPoints(loyaltyResponse.success ? loyaltyResponse.points : impact.loyalty_points || 0)
-        }));
+      try {
+        console.log('🏆 Calling getLoyaltyPoints...');  
+        loyaltyResponse = await apiService.getLoyaltyPoints(userId);
+        console.log('✅ Loyalty API Response:', loyaltyResponse);
+      } catch (err) {
+        console.error('❌ Loyalty API error:', err);
+        loyaltyResponse = { success: false, error: err.message };
       }
+      
+      // Process impact data with better fallbacks
+      let impactToUse = {};
+      if (impactResponse && impactResponse.success && impactResponse.impact) {
+        impactToUse = impactResponse.impact;
+        console.log('📈 Using API impact data:', impactToUse);
+      } else if (userImpact && Object.keys(userImpact).length > 0) {
+        impactToUse = userImpact;
+        console.log('📋 Using context impact data:', impactToUse);
+      } else {
+        // Fallback to default values
+        impactToUse = {
+          food_saved_kg: 12.5,
+          money_saved: 47.25,
+          loyalty_points: 185,
+          items_saved: 24,
+          co2_saved_kg: 23.4,
+          total_orders: 8
+        };
+        console.log('🔄 Using fallback impact data:', impactToUse);
+      }
+      
+      // Process loyalty data with better fallbacks
+      let loyaltyPoints = 0;
+      if (loyaltyResponse && loyaltyResponse.success) {
+        loyaltyPoints = loyaltyResponse.points || loyaltyResponse.loyalty_points || 0;
+        console.log('🏆 Using API loyalty points:', loyaltyPoints);
+      } else if (user?.loyaltyPoints !== undefined) {
+        loyaltyPoints = user.loyaltyPoints;
+        console.log('👤 Using context loyalty points:', loyaltyPoints);
+      } else {
+        loyaltyPoints = impactToUse.loyalty_points || 185;
+        console.log('🔄 Using fallback loyalty points:', loyaltyPoints);
+      }
+      
+      // Set the impact data
+      const newImpactData = {
+        foodSaved: Number(impactToUse.food_saved_kg) || 0,
+        moneySaved: Number(impactToUse.money_saved) || 0, 
+        loyaltyPoints: Number(loyaltyPoints) || 0,
+        co2Reduced: Number(impactToUse.co2_saved_kg) || 0,
+        ordersCompleted: Number(impactToUse.total_orders) || Math.floor((Number(impactToUse.items_saved) || 0) / 3) || 0,
+        rank: getRankFromPoints(Number(loyaltyPoints) || 0)
+      };
+      
+      console.log('🎯 Setting dashboard impact data:', newImpactData);
+      
+      setImpactData(prev => ({
+        ...prev,
+        ...newImpactData
+      }));
       
       // Generate mock chart data for demo
       generateMockChartData();
       
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      showError('Failed to load dashboard data');
+      console.log('✅ Dashboard data loaded successfully');
       
-      // Use mock data for demo
+    } catch (error) {
+      console.error('❌ Error loading dashboard data:', error);
+      console.error('📋 Error details:', {
+        message: error.message,
+        stack: error.stack,
+        userImpact: userImpact,
+        user: user
+      });
+      
+      // Show error but don't fail completely - use fallback data
+      showError(`Dashboard data issue: ${error.message}`);
+      
+      // Use comprehensive fallback data so dashboard still shows something useful
+      const fallbackImpact = {
+        food_saved_kg: 12.5,
+        money_saved: 47.25,
+        loyalty_points: 185,
+        items_saved: 24,
+        co2_saved_kg: 23.4,
+        total_orders: 8
+      };
+      
       setImpactData(prev => ({
         ...prev,
-        foodSaved: userImpact?.food_saved_kg || 12.5,
-        moneySaved: userImpact?.money_saved || 47.25,
-        loyaltyPoints: userImpact?.loyalty_points || user?.loyaltyPoints || 185,
-        ordersCompleted: 8,
-        co2Reduced: userImpact?.co2_saved_kg || 23.4,
-        rank: 'Silver'
+        foodSaved: Number(fallbackImpact.food_saved_kg),
+        moneySaved: Number(fallbackImpact.money_saved), 
+        loyaltyPoints: Number(fallbackImpact.loyalty_points),
+        ordersCompleted: Number(fallbackImpact.total_orders),
+        co2Reduced: Number(fallbackImpact.co2_saved_kg),
+        rank: getRankFromPoints(Number(fallbackImpact.loyalty_points))
       }));
+      
+      // Generate mock chart data for demo
       generateMockChartData();
+      
     } finally {
       setLoading(false);
+      console.log('🏁 Dashboard loading complete');
     }
   };
 
@@ -219,7 +308,7 @@ const Dashboard = () => {
             <DollarSign />
           </div>
           <div className="metric-content">
-            <h3>{apiService.formatPrice(impactData.moneySaved)}</h3>
+            <h3>${(impactData.moneySaved || 0).toFixed(2)}</h3>
             <p>Money Saved</p>
             <div className="metric-trend">
               <TrendingUp size={16} />

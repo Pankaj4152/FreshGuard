@@ -10,6 +10,7 @@ import Checkout from './pages/Checkout';
 import Dashboard from './pages/Dashboard';
 import Alerts from './pages/Alerts';
 import TestAPI from './pages/TestAPI';
+import TestDashboard from './pages/TestDashboard';
 import { CartProvider } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
 import apiService from './services/api';
@@ -119,6 +120,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/alerts" element={<Alerts backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-api" element={<TestAPI backendStatus={backendStatus} addToast={addToast} />} />
+                <Route path="/test-dashboard" element={<TestDashboard />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

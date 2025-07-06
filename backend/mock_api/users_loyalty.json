@@ -1,0 +1,26 @@
+{
+  "user1": {
+    "loyalty_points": 185,
+    "total_orders": 8,
+    "total_saved_kg": 12.5,
+    "level": "Silver",
+    "created_date": "2025-01-01",
+    "last_active": "2025-07-06"
+  },
+  "user2": {
+    "loyalty_points": 95,
+    "total_orders": 3,
+    "total_saved_kg": 6.2,
+    "level": "Bronze",
+    "created_date": "2025-03-15",
+    "last_active": "2025-07-05"
+  },
+  "test_user_123": {
+    "loyalty_points": 250,
+    "total_orders": 12,
+    "total_saved_kg": 18.7,
+    "level": "Silver",
+    "created_date": "2024-12-01",
+    "last_active": "2025-07-06"
+  }
+}

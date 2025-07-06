@@ -6,6 +6,12 @@ import { Plus, Minus, Trash2 } from 'lucide-react';
 const CartItem = ({ item, onUpdate, onRemove }) => {
   const { updateQuantity, removeFromCart } = useCart();
 
+  // Safe helper functions
+  const formatPrice = (price) => {
+    if (!price || typeof price !== 'number') return '$0.00';
+    return apiService.formatPrice ? apiService.formatPrice(price) : `$${price.toFixed(2)}`;
+  };
+
   const handleQuantityChange = async (newQuantity) => {
     if (newQuantity < 1) {
       await handleRemove();
@@ -38,8 +44,8 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
     return icons[category] || '🛒';
   };
 
-  const expiryStatus = apiService.getExpiryStatus(item.expiry_date);
-  const discountPercent = apiService.calculateDiscount(item.price_per_unit, item.discounted_price);
+  const expiryStatus = apiService.getExpiryStatus ? apiService.getExpiryStatus(item.expiry_date) : { status: 'unknown', text: 'Unknown', class: 'text-gray-500' };
+  const discountPercent = apiService.calculateDiscount ? apiService.calculateDiscount(item.price_per_unit, item.discounted_price) : 0;
 
   return (
     <div className="cart-item">
@@ -62,7 +68,7 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
         <div className="cart-item-details">
           <span className={`text-sm ${expiryStatus.status === 'critical' ? 'text-danger' : 
                           expiryStatus.status === 'warning' ? 'text-warning' : 'text-secondary'}`}>
-            Expires: {apiService.formatDate(item.expiry_date)}
+            Expires: {apiService.formatDate ? apiService.formatDate(item.expiry_date) : item.expiry_date || 'Unknown'}
           </span>
         </div>
       </div>
@@ -86,11 +92,11 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
       
       <div className="cart-item-price">
         <div className="price-current">
-          {apiService.formatPrice(item.discounted_price || item.price_per_unit)}
+          {formatPrice(item.discounted_price || item.price_per_unit)}
         </div>
         {discountPercent > 0 && (
           <div className="price-original text-sm">
-            {apiService.formatPrice(item.price_per_unit)}
+            {formatPrice(item.price_per_unit)}
           </div>
         )}
       </div>

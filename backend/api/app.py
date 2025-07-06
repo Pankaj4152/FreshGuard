@@ -15,7 +15,7 @@ from cart_manage import (
     load_cart_data, save_cart_data, add_item_to_cart, remove_item_from_cart,
     clear_cart, get_cart_summary, checkout_cart, load_loyalty_points,
     save_loyalty_points, add_loyalty_points, get_cart, update_impact_dash,
-    add_impact_dash, load_product_thresholds, get_product_thresholds,
+    add_impact_dash, load_impact_dash_data, get_user_impact_data, load_product_thresholds, get_product_thresholds,
     days_until_expiry, find_best_item_for_cart, find_near_expiry_replacements,
     suggest_cart_and_replacements, get_inventory_items_for_product,
     suggest_cart_and_replacements_auto,
@@ -584,42 +584,40 @@ def api_predict_shelf_life():
 
 @app.route('/user_impact', methods=['GET'])
 def api_user_impact():
-    """Get user's sustainability impact metrics."""
+    """Get user's sustainability impact metrics from impact_dash.json."""
     try:
         user_id = request.args.get('user_id')
         if not user_id:
             return jsonify({"success": False, "error": "user_id is required"}), 400
         
-        # Load user loyalty data
-        loyalty_data = load_loyalty_points()
-        user_points = loyalty_data.get(user_id, 0)
+        # Get user impact data directly from impact_dash.json
+        impact_data = get_user_impact_data(user_id)
         
-        # Try to get enhanced user data from users_loyalty.json
+        # Also get loyalty points for consistency
+        loyalty_data = load_loyalty_points()
+        user_points = loyalty_data.get(user_id, impact_data.get('total_loyalty_points', 0))
+        
+        # Try to get user level from users_loyalty.json
         loyalty_file = os.path.join(BASE_DIR, "mock_api", "users_loyalty.json")
-        enhanced_data = {}
+        level = 'Bronze'  # default
         try:
             with open(loyalty_file, 'r') as f:
                 enhanced_data = json.load(f).get(user_id, {})
+                level = enhanced_data.get('level', 'Bronze')
         except:
             pass
-        
-        # Calculate impact metrics
-        items_saved = enhanced_data.get('total_orders', 0) * 3  # Avg 3 items per order
-        food_saved_kg = enhanced_data.get('total_saved_kg', items_saved * 0.5)  # 0.5kg per item
-        co2_saved_kg = food_saved_kg * 2.5  # CO2 calculation
-        money_saved = items_saved * 2.5  # Average savings per item
         
         return jsonify({
             "success": True,
             "user_id": user_id,
             "impact": {
-                "items_saved": items_saved,
-                "food_saved_kg": round(food_saved_kg, 2),
-                "co2_saved_kg": round(co2_saved_kg, 2),
-                "money_saved": round(money_saved, 2),
-                "loyalty_points": user_points,
-                "level": enhanced_data.get('level', 'Bronze'),
-                "total_orders": enhanced_data.get('total_orders', 0)
+                "items_saved": impact_data.get('total_items', 0),
+                "food_saved_kg": round(float(impact_data.get('total_food_saved', 0)), 2),
+                "co2_saved_kg": round(float(impact_data.get('total_co2_reduced', 0)), 2),
+                "money_saved": round(float(impact_data.get('total_money_saved', 0)), 2),
+                "loyalty_points": max(user_points, impact_data.get('total_loyalty_points', 0)),
+                "level": level,
+                "total_orders": impact_data.get('total_orders', 0)
             }
         })
     except Exception as e:

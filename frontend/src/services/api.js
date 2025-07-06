@@ -430,7 +430,14 @@ class ApiService {
 
 // Create and export a singleton instance
 const apiService = new ApiService();
-export default apiService;
 
-// Also export the class for potential custom instances and named export
-export { ApiService, apiService };
+// Debug: Verify methods are available
+console.log('ApiService methods available:', {
+  getDaysUntilExpiry: typeof apiService.getDaysUntilExpiry,
+  getExpiryStatus: typeof apiService.getExpiryStatus,
+  calculateDiscount: typeof apiService.calculateDiscount,
+  formatDate: typeof apiService.formatDate,
+  formatPrice: typeof apiService.formatPrice
+});
+
+export default apiService;

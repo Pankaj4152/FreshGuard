@@ -1,21 +1,9 @@
 {
   "user1": {
-    "total_price": 21.47,
-    "total_price_after_discount": 21.47,
+    "total_price": 0,
+    "total_price_after_discount": 0,
     "food_saved": 0,
-    "co2_reduced": 0,
-    "ITEM0021": {
-      "item_name": "Bagel",
-      "quantity": 1,
-      "price_per_unit": 3.49,
-      "added_at": "2025-07-06T23:01:36.807424"
-    },
-    "ITEM0027": {
-      "item_name": "Beef",
-      "quantity": 2,
-      "price_per_unit": 8.99,
-      "added_at": "2025-07-06T23:03:30.639804"
-    }
+    "co2_reduced": 0
   },
   "user2": {
     "total_price": 0,

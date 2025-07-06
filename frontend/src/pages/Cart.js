@@ -19,6 +19,12 @@ const Cart = () => {
   const { cart, removeFromCart, clearCart, loading: cartLoading } = useCart();
   const { showSuccess, showError, ToastContainer } = useToast();
   
+  // Safe helper functions
+  const formatPrice = (price) => {
+    if (!price || typeof price !== 'number') return '$0.00';
+    return apiService.formatPrice ? apiService.formatPrice(price) : `$${price.toFixed(2)}`;
+  };
+  
   const [loading, setLoading] = useState(false);
   const [cartSummary, setCartSummary] = useState({
     totalItems: 0,
@@ -83,6 +89,10 @@ const Cart = () => {
   };
 
   const getExpiryWarning = (expiryDate) => {
+    if (!apiService.getDaysUntilExpiry) {
+      return { show: false };
+    }
+    
     const days = apiService.getDaysUntilExpiry(expiryDate);
     if (days <= 2) {
       return {
@@ -190,14 +200,14 @@ const Cart = () => {
             <div className="card-body">
               <div className="summary-row">
                 <span>Items ({cartSummary.totalItems})</span>
-                <span>{apiService.formatPrice(cartSummary.totalOriginalPrice)}</span>
+                <span>{formatPrice(cartSummary.totalOriginalPrice)}</span>
               </div>
               
               {cartSummary.totalDiscount > 0 && (
                 <div className="summary-row discount">
                   <span>Savings</span>
                   <span className="text-success">
-                    -{apiService.formatPrice(cartSummary.totalDiscount)}
+                    -{formatPrice(cartSummary.totalDiscount)}
                   </span>
                 </div>
               )}
@@ -206,7 +216,7 @@ const Cart = () => {
               
               <div className="summary-row total">
                 <span>Total</span>
-                <span>{apiService.formatPrice(cartSummary.totalDiscountedPrice)}</span>
+                <span>{formatPrice(cartSummary.totalDiscountedPrice)}</span>
               </div>
               
               {cartSummary.loyaltyPointsEarned > 0 && (

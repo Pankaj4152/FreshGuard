@@ -23,6 +23,12 @@ const Checkout = () => {
   const { showSuccess, showError, ToastContainer } = useToast();
   const navigate = useNavigate();
   
+  // Safe helper functions
+  const formatPrice = (price) => {
+    if (!price || typeof price !== 'number') return '$0.00';
+    return apiService.formatPrice ? apiService.formatPrice(price) : `$${price.toFixed(2)}`;
+  };
+  
   const [loading, setLoading] = useState(false);
   const [checkoutComplete, setCheckoutComplete] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState(null);
@@ -161,7 +167,7 @@ const Checkout = () => {
                 <DollarSign />
               </div>
               <div className="stat-content">
-                <h3>{apiService.formatPrice(checkoutResult.total_savings || orderSummary.totalDiscount)}</h3>
+                <h3>{formatPrice(checkoutResult.total_savings || orderSummary.totalDiscount)}</h3>
                 <p>Money Saved</p>
               </div>
             </div>
@@ -230,19 +236,19 @@ const Checkout = () => {
                     <p className="item-category">{item.category}</p>
                     <div className="item-expiry">
                       <Calendar size={14} />
-                      <span>Expires: {apiService.formatDate(item.expiry_date)}</span>
+                      <span>Expires: {apiService.formatDate ? apiService.formatDate(item.expiry_date) : item.expiry_date || 'Unknown'}</span>
                     </div>
                   </div>
                   <div className="item-pricing">
                     <div className="quantity">Qty: {item.quantity}</div>
                     {item.discounted_price && item.discounted_price < item.price_per_unit ? (
                       <div className="price-display">
-                        <span className="original-price">{apiService.formatPrice(item.price_per_unit)}</span>
-                        <span className="discounted-price">{apiService.formatPrice(item.discounted_price)}</span>
+                        <span className="original-price">{formatPrice(item.price_per_unit)}</span>
+                        <span className="discounted-price">{formatPrice(item.discounted_price)}</span>
                       </div>
                     ) : (
                       <div className="price-display">
-                        <span className="current-price">{apiService.formatPrice(item.price_per_unit)}</span>
+                        <span className="current-price">{formatPrice(item.price_per_unit)}</span>
                       </div>
                     )}
                   </div>
@@ -286,14 +292,14 @@ const Checkout = () => {
             <div className="card-body">
               <div className="summary-row">
                 <span>Items ({orderSummary.totalItems})</span>
-                <span>{apiService.formatPrice(orderSummary.totalOriginalPrice)}</span>
+                <span>{formatPrice(orderSummary.totalOriginalPrice)}</span>
               </div>
               
               {orderSummary.totalDiscount > 0 && (
                 <div className="summary-row discount">
                   <span>FreshGuard Savings</span>
                   <span className="text-success">
-                    -{apiService.formatPrice(orderSummary.totalDiscount)}
+                    -{formatPrice(orderSummary.totalDiscount)}
                   </span>
                 </div>
               )}
@@ -307,7 +313,7 @@ const Checkout = () => {
               
               <div className="summary-row total">
                 <span>Total</span>
-                <span>{apiService.formatPrice(orderSummary.totalDiscountedPrice)}</span>
+                <span>{formatPrice(orderSummary.totalDiscountedPrice)}</span>
               </div>
               
               {/* Impact Summary */}
