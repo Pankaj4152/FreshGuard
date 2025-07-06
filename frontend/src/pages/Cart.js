@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import CartItem from '../components/CartItem';
 import { useToast } from '../components/Toast';
 import { 
   ShoppingCart, 
-  Plus, 
-  Minus, 
   Trash2, 
   ArrowRight, 
   AlertCircle,
@@ -19,7 +17,6 @@ import {
 
 const Cart = () => {
   const { cart, removeFromCart, clearCart, loading: cartLoading } = useCart();
-  const { user } = useUser();
   const { showSuccess, showError, ToastContainer } = useToast();
   
   const [loading, setLoading] = useState(false);

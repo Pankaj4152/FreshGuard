@@ -1,0 +1,39 @@
+{
+  "name": "Test Frontend Build",
+  "description": "Test if the frontend can build successfully",
+  "steps": [
+    {
+      "step": 1,
+      "action": "Install dependencies",
+      "command": "npm install",
+      "directory": "frontend"
+    },
+    {
+      "step": 2, 
+      "action": "Build frontend",
+      "command": "npm run build",
+      "directory": "frontend"
+    },
+    {
+      "step": 3,
+      "action": "Start development server",
+      "command": "npm start",
+      "directory": "frontend",
+      "note": "This will start the dev server on http://localhost:3000"
+    }
+  ],
+  "verification": [
+    "✅ No compilation errors",
+    "✅ All components render correctly", 
+    "✅ API calls work (when backend is running)",
+    "✅ Cart operations function properly",
+    "✅ Smart replacement modal appears",
+    "✅ Inventory page shows products with filters"
+  ],
+  "troubleshooting": {
+    "compilation_errors": "Check that all imports are correct and components exist",
+    "api_errors": "Ensure backend is running on http://localhost:5000",
+    "missing_components": "Verify all component files exist in src/components/",
+    "routing_errors": "Check that all page components are properly imported in App.js"
+  }
+}

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiService } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import apiService from '../services/api';
 import { useUser } from './UserContext';
 
 const CartContext = createContext();
@@ -18,14 +18,7 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load cart on mount and when user changes
-  useEffect(() => {
-    if (user && user.id) {
-      loadCart();
-    }
-  }, [user]);
-
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
       setLoading(true);
       const userId = user?.id || 'user1'; // Fallback for safety
@@ -44,7 +37,14 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  // Load cart on mount and when user changes
+  useEffect(() => {
+    if (user && user.id) {
+      loadCart();
+    }
+  }, [user, loadCart]);
 
   const addToCart = async (userId, itemQuery, quantity) => {
     try {

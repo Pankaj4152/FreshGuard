@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { useToast } from '../components/Toast';
 import { 
   AlertTriangle, 
   Clock, 
   Calendar, 
-  ShoppingCart,
   Bell,
   BellOff,
-  Filter,
   Trash2,
   RefreshCw,
   Package,

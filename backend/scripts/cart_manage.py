@@ -560,3 +560,176 @@ def suggest_cart_and_replacements_auto(product_name):
     inventory_items = get_inventory_items_for_product(product_name)
     return suggest_cart_and_replacements(product_name, inventory_items)
 
+# Environmental impact calculation functions
+
+def load_environmental_impact(file_path=None):
+    """Load environmental impact configuration from JSON file."""
+    if file_path is None:
+        file_path = os.path.join(BASE_DIR, "mock_api", "environmental_impact.json")
+    
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Warning: Could not load environmental impact data: {e}")
+        # Return default environmental impact configuration
+        return {
+            "sustainability_messages": {
+                "meat_rescue": "🥩 Rescued high-impact meat - You're fighting climate change!",
+                "dairy_rescue": "🧀 Dairy rescue mission complete - Helping reduce methane emissions!",
+                "produce_rescue": "🍎 Fresh produce saved - Supporting sustainable agriculture!",
+                "co2_equivalents": {
+                    "driving_miles_per_kg_co2": 2.5
+                }
+            },
+            "impact_thresholds": {
+                "high_impact_co2": 10,
+                "medium_impact_co2": 5,
+                "high_impact_food": 3,
+                "medium_impact_food": 1.5
+            },
+            "loyalty_points_multiplier": {
+                "base_points_per_item": 1,
+                "points_per_kg_food_saved": 10,
+                "points_per_kg_co2_reduced": 5,
+                "high_impact_bonus_threshold": 10,
+                "high_impact_bonus_points": 50,
+                "meat_sustainability_bonus": 25,
+                "dairy_sustainability_bonus": 15,
+                "produce_freshness_bonus": 10
+            },
+            "item_impact_factors": {
+                # CO2 kg per kg of food item
+                "meat": {"co2_per_kg": 6.0, "avg_weight_kg": 0.5},
+                "dairy": {"co2_per_kg": 3.2, "avg_weight_kg": 0.3},
+                "produce": {"co2_per_kg": 2.0, "avg_weight_kg": 0.2},
+                "bread": {"co2_per_kg": 1.5, "avg_weight_kg": 0.4},
+                "other": {"co2_per_kg": 2.5, "avg_weight_kg": 0.3}
+            }
+        }
+
+def calculate_item_impact(item_name, quantity=1, category=None):
+    """Calculate environmental impact for a specific item."""
+    impact_data = load_environmental_impact()
+    factors = impact_data.get("item_impact_factors", {})
+    
+    # Determine category if not provided
+    if not category:
+        item_lower = item_name.lower()
+        if any(meat in item_lower for meat in ['beef', 'chicken', 'pork', 'meat', 'steak']):
+            category = 'meat'
+        elif any(dairy in item_lower for dairy in ['milk', 'cheese', 'yogurt', 'butter']):
+            category = 'dairy'
+        elif any(produce in item_lower for produce in ['apple', 'banana', 'lettuce', 'tomato', 'vegetable', 'fruit']):
+            category = 'produce'
+        elif any(bread in item_lower for bread in ['bread', 'roll', 'bun']):
+            category = 'bread'
+        else:
+            category = 'other'
+    
+    # Get impact factors for the category
+    category_factors = factors.get(category.lower(), factors.get('other', {}))
+    co2_per_kg = category_factors.get('co2_per_kg', 2.5)
+    avg_weight_kg = category_factors.get('avg_weight_kg', 0.3)
+    
+    # Calculate impact for the quantity
+    total_weight_kg = avg_weight_kg * quantity
+    co2_saved_kg = co2_per_kg * total_weight_kg
+    
+    return {
+        "food_saved_kg": total_weight_kg,
+        "co2_reduced_kg": co2_saved_kg,
+        "category": category,
+        "quantity": quantity
+    }
+
+def generate_sustainability_message(impact):
+    """Generate encouraging message based on environmental impact."""
+    impact_data = load_environmental_impact()
+    messages = impact_data.get("sustainability_messages", {})
+    thresholds = impact_data.get("impact_thresholds", {})
+    equivalents = messages.get("co2_equivalents", {})
+    
+    co2_saved = impact["co2_reduced_kg"]
+    food_saved = impact["food_saved_kg"]
+    
+    driving_miles = co2_saved * equivalents.get("driving_miles_per_kg_co2", 2.5)
+    
+    # Determine impact level and generate appropriate message
+    if co2_saved >= thresholds.get("high_impact_co2", 10):
+        return f"🌍 Incredible! You've saved {co2_saved:.1f}kg of CO2 - equivalent to not driving {driving_miles:.0f} miles!"
+    elif co2_saved >= thresholds.get("medium_impact_co2", 5):
+        return f"🌱 Great choice! You've reduced {co2_saved:.1f}kg of CO2 emissions - that's like planting a tree!"
+    elif food_saved >= thresholds.get("high_impact_food", 3):
+        return f"💚 Excellent! You've saved {food_saved:.1f}kg of food from going to waste!"
+    elif food_saved >= thresholds.get("medium_impact_food", 1.5):
+        return f"✨ Well done! You've saved {food_saved:.1f}kg of food - every bit helps reduce waste!"
+    else:
+        return "🌟 Every sustainable choice matters - thank you for helping reduce waste!"
+
+def calculate_loyalty_points_from_impact(cart_impact, cart_items=None, bonus_multiplier=1.0):
+    """Calculate loyalty points based on environmental impact and item types."""
+    impact_data = load_environmental_impact()
+    multiplier_config = impact_data.get("loyalty_points_multiplier", {})
+    
+    base_points_per_item = multiplier_config.get("base_points_per_item", 1)
+    points_per_kg_food = multiplier_config.get("points_per_kg_food_saved", 10)
+    points_per_kg_co2 = multiplier_config.get("points_per_kg_co2_reduced", 5)
+    high_impact_threshold = multiplier_config.get("high_impact_bonus_threshold", 10)
+    high_impact_bonus = multiplier_config.get("high_impact_bonus_points", 50)
+    
+    # Category-specific bonuses
+    meat_bonus = multiplier_config.get("meat_sustainability_bonus", 25)
+    dairy_bonus = multiplier_config.get("dairy_sustainability_bonus", 15)
+    produce_bonus = multiplier_config.get("produce_freshness_bonus", 10)
+    
+    base_points = 0
+    
+    # Points for food saved (10 points per kg)
+    base_points += cart_impact["food_saved_kg"] * points_per_kg_food
+    
+    # Points for CO2 reduction (5 points per kg)
+    base_points += cart_impact["co2_reduced_kg"] * points_per_kg_co2
+    
+    # Category-specific bonuses if cart_items provided
+    if cart_items:
+        for item in cart_items:
+            category = item.get('category', '').lower()
+            if category == 'meat':
+                base_points += meat_bonus
+            elif category == 'dairy':
+                base_points += dairy_bonus
+            elif category == 'produce':
+                base_points += produce_bonus
+    
+    # Bonus points for high impact orders
+    if cart_impact["co2_reduced_kg"] > high_impact_threshold:
+        base_points += high_impact_bonus
+    
+    return int(base_points * bonus_multiplier)
+
+def get_product_impact_preview(item_name, quantity=1, category=None):
+    """Get environmental impact preview for a specific product."""
+    impact = calculate_item_impact(item_name, quantity, category)
+    impact_data = load_environmental_impact()
+    messages = impact_data.get("sustainability_messages", {})
+    
+    # Generate specific message based on category
+    item_key = item_name.lower().replace(" ", "_")
+    category_lower = category.lower() if category else ""
+    
+    if category_lower == "meat":
+        preview_message = messages.get("meat_rescue", "🥩 High environmental impact item!")
+    elif category_lower == "dairy":
+        preview_message = messages.get("dairy_rescue", "🧀 Great for reducing dairy waste!")
+    elif category_lower == "produce":
+        preview_message = messages.get("produce_rescue", "🍎 Fresh and sustainable choice!")
+    else:
+        preview_message = f"💚 Saves {impact['food_saved_kg']:.1f}kg food, {impact['co2_reduced_kg']:.1f}kg CO2"
+    
+    return {
+        "environmental_impact": impact,
+        "preview_message": preview_message,
+        "estimated_points": calculate_loyalty_points_from_impact(impact)
+    }
+

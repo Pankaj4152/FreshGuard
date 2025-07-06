@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import { useToast } from '../components/Toast';
 import { 
   CreditCard, 

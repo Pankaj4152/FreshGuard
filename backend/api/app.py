@@ -18,7 +18,8 @@ from cart_manage import (
     add_impact_dash, load_product_thresholds, get_product_thresholds,
     days_until_expiry, find_best_item_for_cart, find_near_expiry_replacements,
     suggest_cart_and_replacements, get_inventory_items_for_product,
-    suggest_cart_and_replacements_auto
+    suggest_cart_and_replacements_auto,
+    get_product_impact_preview
 )
 
 # Import available functions from cart_cli
@@ -80,7 +81,17 @@ except ImportError as e:
         return None
     
     def get_replacement_suggestions(item_name, near_expiry_threshold=5):
-        return []
+        """Fallback replacement suggestions using cart_manage functions."""
+        try:
+            # Get inventory items for the product
+            inventory_items = get_inventory_items_for_product(item_name)
+            if inventory_items:
+                # Use the replacement function from cart_manage
+                replacements = find_near_expiry_replacements(item_name, inventory_items)
+                return replacements
+            return []
+        except Exception:
+            return []
     
     def get_replacement_message(days_until_expiry):
         return "No replacement suggestions available"
@@ -109,13 +120,14 @@ except ImportError:
     ML_AVAILABLE = False
     print("Warning: ML prediction module not available, using fallback functionality")
 
+# Base directory for file paths
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "impact_dash.json")
+
 app = Flask(__name__)
 from flasgger import Swagger
 swagger = Swagger(app) 
 CORS(app)  # Enable CORS for frontend integration
-
-# Base directory for file paths
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @app.route('/', methods=['GET'])
 def home():
@@ -325,6 +337,7 @@ def get_inventory():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/add_to_cart', methods=['POST'])
+@app.route('/add_to_cart', methods=['POST'])
 def api_add_to_cart():
     """Add item to cart with replacement suggestion."""
     try:
@@ -333,7 +346,8 @@ def api_add_to_cart():
             return jsonify({"success": False, "error": "No JSON data provided"}), 400
         
         # Validate required fields
-        required_fields = ['user_id', 'item_query', 'quantity']
+        required_fields = ['user_id', 'item_query', 'quantity'
+        ]
         for field in required_fields:
             if field not in data:
                 return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
@@ -1001,6 +1015,31 @@ def api_days_until_expiry():
     except Exception as e:
         return jsonify({"success": False, "error": f"Error calculating days until expiry: {str(e)}"}), 500
 
+@app.route('/get_product_impact_preview', methods=['POST'])
+def api_get_product_impact_preview():
+    """Get environmental impact preview for a specific product."""
+    try:
+        data = request.json
+        if not data or 'item_name' not in data:
+            return jsonify({"success": False, "error": "item_name is required"}), 400
+        
+        item_name = data['item_name']
+        quantity = data.get('quantity', 1)
+        category = data.get('category')
+        
+        preview = get_product_impact_preview(item_name, quantity, category)
+        
+        return jsonify({
+            "success": True,
+            "item_name": item_name,
+            "quantity": quantity,
+            "category": category,
+            **preview
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error getting impact preview: {str(e)}"}), 500
+
 # Enhanced error handlers with more detailed logging
 @app.errorhandler(400)
 def bad_request(error):
@@ -1026,7 +1065,7 @@ def not_found(error):
             "/enhanced_predict_shelf_life", "/user_impact", "/update_impact_dash",
             "/load_product_thresholds", "/get_product_threshold", "/find_freshest_item",
             "/get_product_details", "/test_functions", "/inventory_items_for_product",
-            "/days_until_expiry"
+            "/days_until_expiry", "/get_product_impact_preview"
         ]
     }), 404
 
@@ -1206,6 +1245,28 @@ def load_inventory_fallback():
     except Exception as e:
         print(f"Error loading inventory fallback: {e}")
         return []
+
+# Fallback function for loading inventory when cart_cli is not available
+def load_inventory():
+    """Load inventory using fallback method if cart_cli is not available."""
+    try:
+        if CART_CLI_AVAILABLE:
+            # Use cart_cli function if available
+            return load_inventory_from_cli()
+        else:
+            # Use fallback method
+            return load_inventory_fallback()
+    except Exception as e:
+        print(f"Error loading inventory: {e}")
+        return load_inventory_fallback()
+
+def load_inventory_from_cli():
+    """Load inventory from cart_cli module if available."""
+    try:
+        from cart_cli import load_inventory as cli_load_inventory
+        return cli_load_inventory()
+    except ImportError:
+        return load_inventory_fallback()
 
 if __name__ == '__main__':
     print("\n" + "="*60)

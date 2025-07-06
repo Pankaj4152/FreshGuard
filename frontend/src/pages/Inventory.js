@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import ProductCard from '../components/ProductCard';
 import ReplacementModal from '../components/ReplacementModal';
-import { useToast } from '../components/Toast';
 import { 
   Search, 
   Filter, 
@@ -15,10 +14,9 @@ import {
   TrendingDown
 } from 'lucide-react';
 
-const Inventory = () => {
+const Inventory = ({ backendStatus, addToast }) => {
   const { user } = useUser();
   const { addToCart, addReplacementToCart } = useCart();
-  const { showSuccess, showError, ToastContainer } = useToast();
   
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -29,16 +27,16 @@ const Inventory = () => {
   const [showExpiringSoon, setShowExpiringSoon] = useState(false);
   const [viewMode, setViewMode] = useState('grouped'); // 'grouped' or 'individual'
   const [showSmartFeatures, setShowSmartFeatures] = useState(true);
-  const [showDebug, setShowDebug] = useState(false); // Add debug toggle
+  const [showDebug, setShowDebug] = useState(false);
   const [replacementModal, setReplacementModal] = useState({
     isOpen: false,
     replacement: null
   });
+  const [notifications, setNotifications] = useState([]);
 
   const categories = [
     'All Categories',
-    'Fruits',
-    'Vegetables',
+    'Produce',
     'Dairy',
     'Meat',
     'Bakery',
@@ -49,11 +47,22 @@ const Inventory = () => {
 
   useEffect(() => {
     loadProducts();
+    checkApiHealth();
   }, [viewMode, showSmartFeatures]);
 
   useEffect(() => {
     filterAndSortProducts();
   }, [products, searchQuery, selectedCategory, sortBy, showExpiringSoon]);
+
+  const checkApiHealth = async () => {
+    try {
+      const health = await apiService.healthCheck();
+      setApiStatus(health);
+    } catch (error) {
+      console.error('API health check failed:', error);
+      setApiStatus({ status: 'unhealthy', error: error.message });
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -75,22 +84,63 @@ const Inventory = () => {
       }
       
       if (response.success) {
-        // Ensure we have an array and add safety checks
-        const inventory = Array.isArray(response.inventory) ? response.inventory : 
-                         Array.isArray(response.all_grouped) ? response.all_grouped : [];
-        setProducts(inventory);
+        // Handle different response structures
+        const inventory = response.inventory || response.all_grouped || [];
+        setProducts(Array.isArray(inventory) ? inventory : []);
         
-        // Add metadata about grouping
-        if (response.isGrouped || response.grouping_enabled) {
-          console.log('Using grouped inventory with smart features');
+        // Check for warnings or notifications
+        if (response.grouping_enabled === false) {
+          addNotification('info', 'Inventory grouping not available - showing individual items');
         }
+        
+        if (showDebug) {
+          console.log('Loaded products:', inventory);
+          console.log('Response metadata:', {
+            grouped: response.grouped,
+            count: response.count,
+            grouping_enabled: response.grouping_enabled
+          });
+        }
+      } else {
+        addNotification('error', response.error || 'Failed to load products');
       }
     } catch (error) {
       console.error('Error loading products:', error);
-      showError('Failed to load products');
-      setProducts([]); // Fallback to empty array
+      addNotification('error', 'Failed to load products: ' + error.message);
+      setProducts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addNotification = (type, message) => {
+    const notification = {
+      id: Date.now(),
+      type,
+      message,
+      timestamp: new Date()
+    };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 5000);
+  };
+
+  const showSuccess = (message) => {
+    if (addToast) {
+      addToast(message, 'success');
+    } else {
+      addNotification('success', message);
+    }
+  };
+
+  const showError = (message) => {
+    if (addToast) {
+      addToast(message, 'error');
+    } else {
+      addNotification('error', message);
     }
   };
 
@@ -98,9 +148,8 @@ const Inventory = () => {
     if (!expiryDate) return 999;
     const today = new Date();
     const expiry = new Date(expiryDate);
-    const diffTime = expiry - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    const timeDiff = expiry.getTime() - today.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
   };
 
   const filterAndSortProducts = () => {
@@ -111,7 +160,7 @@ const Inventory = () => {
 
     let filtered = [...products];
 
-    // Filter by search query - FIX: Use item_name instead of name
+    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(product => {
         if (!product) return false;
@@ -142,7 +191,7 @@ const Inventory = () => {
       });
     }
 
-    // Sort products - FIX: Use item_name and add safety checks
+    // Sort products
     filtered.sort((a, b) => {
       if (!a || !b) return 0;
 
@@ -171,7 +220,7 @@ const Inventory = () => {
     setFilteredProducts(filtered);
   };
 
-  const handleAddToCart = async (product, quantity) => {
+  const handleAddToCart = async (product, quantity, showSmartFeatures = true) => {
     if (!product || !product.item_id) {
       showError('Invalid product');
       return { success: false };
@@ -257,7 +306,7 @@ const Inventory = () => {
 
   const handleReplacementAccept = async (replacement) => {
     try {
-      const result = await addReplacementToCart('101', replacement, 1);
+      const result = await addReplacementToCart('user1', replacement, 1);
       
       if (result.success) {
         const replacementName = replacement.item_name || replacement.name || 'Replacement';
@@ -298,13 +347,22 @@ const Inventory = () => {
 
   return (
     <div className="inventory-page">
-      <ToastContainer />
+      {/* Notifications */}
+      {notifications.map(notification => (
+        <div
+          key={notification.id}
+          className={`alert alert-${notification.type === 'error' ? 'danger' : notification.type} position-fixed`}
+          style={{ top: '20px', right: '20px', zIndex: 1050, maxWidth: '400px' }}
+        >
+          {notification.message}
+        </div>
+      ))}
       
       <div className="container py-4">
         {/* Header */}
         <div className="row mb-4">
           <div className="col">
-            <h1>Product Inventory</h1>
+            <h1 className="text-primary font-bold">Product Inventory</h1>
             <p className="text-secondary">
               Discover fresh products with smart pricing and sustainability features
             </p>
@@ -314,30 +372,36 @@ const Inventory = () => {
         {/* Quick Stats */}
         <div className="row mb-4">
           <div className="col-auto">
-            <div className="stat-card">
-              <div className="flex items-center gap-2">
-                <Package className="text-primary" size={20} />
-                <span className="stat-value">{products.length}</span>
+            <div className="card bg-light border-0">
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center gap-2">
+                  <Package className="text-primary" size={20} />
+                  <span className="h5 mb-0">{products.length}</span>
+                </div>
+                <div className="text-muted small">Total Products</div>
               </div>
-              <div className="stat-label">Total Products</div>
             </div>
           </div>
           <div className="col-auto">
-            <div className="stat-card">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="text-warning" size={20} />
-                <span className="stat-value">{getExpiringCount()}</span>
+            <div className="card bg-light border-0">
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center gap-2">
+                  <AlertTriangle className="text-warning" size={20} />
+                  <span className="h5 mb-0">{getExpiringCount()}</span>
+                </div>
+                <div className="text-muted small">Expiring Soon</div>
               </div>
-              <div className="stat-label">Expiring Soon</div>
             </div>
           </div>
           <div className="col-auto">
-            <div className="stat-card">
-              <div className="flex items-center gap-2">
-                <TrendingDown className="text-success" size={20} />
-                <span className="stat-value">{getDiscountedCount()}</span>
+            <div className="card bg-light border-0">
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center gap-2">
+                  <TrendingDown className="text-success" size={20} />
+                  <span className="h5 mb-0">{getDiscountedCount()}</span>
+                </div>
+                <div className="text-muted small">On Sale</div>
               </div>
-              <div className="stat-label">On Sale</div>
             </div>
           </div>
         </div>
@@ -347,14 +411,14 @@ const Inventory = () => {
           <div className="card-body">
             <div className="row align-items-center">
               <div className="col-md-4">
-                <div className="form-group">
+                <div className="mb-3">
                   <label className="form-label">
-                    <Search size={16} className="mr-1" />
+                    <Search size={16} className="me-1" />
                     Search Products
                   </label>
                   <input
                     type="text"
-                    className="form-input"
+                    className="form-control"
                     placeholder="Search by name or category..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -363,9 +427,9 @@ const Inventory = () => {
               </div>
               
               <div className="col-md-3">
-                <div className="form-group">
+                <div className="mb-3">
                   <label className="form-label">
-                    <Filter size={16} className="mr-1" />
+                    <Filter size={16} className="me-1" />
                     Category
                   </label>
                   <select
@@ -383,9 +447,9 @@ const Inventory = () => {
               </div>
               
               <div className="col-md-3">
-                <div className="form-group">
+                <div className="mb-3">
                   <label className="form-label">
-                    <SlidersHorizontal size={16} className="mr-1" />
+                    <SlidersHorizontal size={16} className="me-1" />
                     Sort By
                   </label>
                   <select
@@ -402,19 +466,23 @@ const Inventory = () => {
               </div>
               
               <div className="col-md-2">
-                <div className="form-group">
+                <div className="mb-3">
                   <label className="form-label">
-                    <Clock size={16} className="mr-1" />
+                    <Clock size={16} className="me-1" />
                     Quick Filter
                   </label>
-                  <label className="flex items-center gap-2">
+                  <div className="form-check">
                     <input
                       type="checkbox"
+                      className="form-check-input"
+                      id="expiringSoon"
                       checked={showExpiringSoon}
                       onChange={(e) => setShowExpiringSoon(e.target.checked)}
                     />
-                    <span>Expiring Soon</span>
-                  </label>
+                    <label className="form-check-label" htmlFor="expiringSoon">
+                      Expiring Soon
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -422,9 +490,9 @@ const Inventory = () => {
             {/* Smart Features Controls */}
             <div className="row align-items-center mt-3 pt-3 border-top">
               <div className="col-md-3">
-                <div className="form-group">
+                <div className="mb-3">
                   <label className="form-label">
-                    <Package size={16} className="mr-1" />
+                    <Package size={16} className="me-1" />
                     View Mode
                   </label>
                   <select
@@ -443,29 +511,37 @@ const Inventory = () => {
               </div>
               
               <div className="col-md-3">
-                <div className="form-group">
-                  <label className="flex items-center gap-2">
+                <div className="mb-3">
+                  <div className="form-check">
                     <input
                       type="checkbox"
+                      className="form-check-input"
+                      id="smartFeatures"
                       checked={showSmartFeatures}
                       onChange={(e) => setShowSmartFeatures(e.target.checked)}
                     />
-                    <span>🤖 Smart Features</span>
-                  </label>
+                    <label className="form-check-label" htmlFor="smartFeatures">
+                      🤖 Smart Features
+                    </label>
+                  </div>
                   <small className="text-muted">AI-powered recommendations and replacements</small>
                 </div>
               </div>
               
               <div className="col-md-2">
-                <div className="form-group">
-                  <label className="flex items-center gap-2">
+                <div className="mb-3">
+                  <div className="form-check">
                     <input
                       type="checkbox"
+                      className="form-check-input"
+                      id="debug"
                       checked={showDebug}
                       onChange={(e) => setShowDebug(e.target.checked)}
                     />
-                    <span>🐛 Debug</span>
-                  </label>
+                    <label className="form-check-label" htmlFor="debug">
+                      🐛 Debug
+                    </label>
+                  </div>
                   <small className="text-muted">Show debug info</small>
                 </div>
               </div>
@@ -497,6 +573,7 @@ const Inventory = () => {
                     <li>View Mode: {viewMode}</li>
                     <li>Total Products: {products.length}</li>
                     <li>Filtered Products: {filteredProducts.length}</li>
+                    <li>Backend Status: {backendStatus?.status || 'Unknown'}</li>
                   </ul>
                 </div>
                 <div className="col-md-4">
@@ -551,31 +628,34 @@ const Inventory = () => {
         {/* Products Grid */}
         {loading ? (
           <div className="text-center py-5">
-            <div className="spinner spinner-primary" style={{ width: '40px', height: '40px' }}></div>
+            <div className="spinner-border text-primary" style={{ width: '40px', height: '40px' }} role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
             <p className="mt-3">Loading products...</p>
           </div>
         ) : filteredProducts.length > 0 ? (
           <>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-secondary">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <p className="text-secondary mb-0">
                 Showing {filteredProducts.length} of {products.length} products
               </p>
               {showExpiringSoon && (
-                <div className="alert alert-warning" style={{ marginBottom: 0, padding: '0.5rem 1rem' }}>
-                  <AlertTriangle size={16} className="mr-2" />
+                <div className="alert alert-warning mb-0 py-2 px-3">
+                  <AlertTriangle size={16} className="me-2" />
                   Showing only items expiring within 2 days
                 </div>
               )}
             </div>
             
-            <div className="product-grid">
+            <div className="row g-3">
               {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.item_id}
-                  product={product}
-                  onAddToCart={handleAddToCart}
-                  showSmartFeatures={showSmartFeatures}
-                />
+                <div key={product.item_id} className="col-md-6 col-lg-4 col-xl-3">
+                  <ProductCard
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    showSmartFeatures={showSmartFeatures}
+                  />
+                </div>
               ))}
             </div>
           </>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { useCart } from '../context/CartContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import ProductCard from '../components/ProductCard';
 import ReplacementModal from '../components/ReplacementModal';
 import { useToast } from '../components/Toast';
@@ -21,7 +21,7 @@ import {
 
 const Home = () => {
   const { user, userImpact } = useUser();
-  const { addToCart, addReplacementToCart } = useCart();
+  const { addReplacementToCart } = useCart();
   const { showSuccess, showError, ToastContainer } = useToast();
   
   const [featuredProducts, setFeaturedProducts] = useState([]);

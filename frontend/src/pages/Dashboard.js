@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import { useToast } from '../components/Toast';
 import { 
   TrendingUp, 
@@ -9,7 +9,6 @@ import {
   Award, 
   Calendar,
   BarChart3,
-  PieChart,
   Activity,
   Target,
   Users,

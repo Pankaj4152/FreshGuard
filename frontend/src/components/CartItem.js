@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 
 const CartItem = ({ item, onUpdate, onRemove }) => {

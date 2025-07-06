@@ -106,9 +106,7 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
   // Smart feature indicators
   const hasSustainabilityBenefit = hasDiscount || expiryStatus.status === 'warning' || expiryStatus.status === 'critical';
   const isRecommended = product.is_recommended || product.freshness_score > 0.8;
-  const hasSmartPricing = product.effective_discount !== product.discount;
   const isUrgent = expiryStatus.status === 'critical';
-  const isNearExpiry = expiryStatus.status === 'warning';
 
   return (
     <div className={`product-card ${isUrgent ? 'urgent' : ''} ${isRecommended ? 'recommended' : ''}`}>
