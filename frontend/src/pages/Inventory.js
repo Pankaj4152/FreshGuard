@@ -28,6 +28,7 @@ const Inventory = ({ backendStatus, addToast }) => {
   const [viewMode, setViewMode] = useState('grouped'); // 'grouped' or 'individual'
   const [showSmartFeatures, setShowSmartFeatures] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
+  const [apiStatus, setApiStatus] = useState(null); // Add missing state
   const [replacementModal, setReplacementModal] = useState({
     isOpen: false,
     replacement: null

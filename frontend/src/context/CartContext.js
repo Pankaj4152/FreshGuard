@@ -18,10 +18,13 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Define loadCart function first
   const loadCart = useCallback(async () => {
+    if (!user?.id) return; // Early return if no user
+    
     try {
       setLoading(true);
-      const userId = user?.id || 'user1'; // Fallback for safety
+      const userId = user.id;
       const response = await apiService.getCart(userId);
       if (response.success) {
         // Backend returns cart items in 'cart' or 'items' field
