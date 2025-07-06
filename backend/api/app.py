@@ -1,29 +1,96 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+# Add the scripts directory to the Python path for module resolution
 import sys
 import os
+scripts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+if scripts_dir not in sys.path:
+    sys.path.insert(0, scripts_dir)
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import json
+from datetime import datetime
 
-# Add the scripts directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
-
+# Import all necessary modules with error handling
 from cart_manage import (
     load_cart_data, save_cart_data, add_item_to_cart, remove_item_from_cart,
     clear_cart, get_cart_summary, checkout_cart, load_loyalty_points,
-    save_loyalty_points, add_loyalty_points, get_cart
+    save_loyalty_points, add_loyalty_points, get_cart, update_impact_dash,
+    add_impact_dash, load_product_thresholds, get_product_thresholds,
+    days_until_expiry, find_best_item_for_cart, find_near_expiry_replacements,
+    suggest_cart_and_replacements, get_inventory_items_for_product,
+    suggest_cart_and_replacements_auto
 )
-from cart_cli import (
-    load_inventory, find_item_in_inventory, calculate_discount,
-    calculate_loyalty_points, add_item_with_replacement, add_replacement_item
-)
-from replacement_utils import find_nearest_expiry_item
 
-# Try to import new grouping functionality
+# Import available functions from cart_cli
+try:
+    from cart_cli import (
+        load_inventory, find_item_in_inventory,
+        add_item_with_replacement, add_replacement_item,
+        test_all_functions
+    )
+    CART_CLI_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Some cart_cli functions not available: {e}")
+    CART_CLI_AVAILABLE = False
+
+# Import calculate_discount from cart_manage if not available in cart_cli
+try:
+    from cart_cli import calculate_discount, calculate_loyalty_points
+except ImportError:
+    # Define fallback functions if not available in cart_cli
+    def calculate_discount(expiry_date, max_discount=50):
+        """Calculate discount based on days until expiry."""
+        try:
+            days = days_until_expiry(expiry_date)
+            if days <= 0:
+                return max_discount  # Max discount for expired items
+            elif days <= 2:
+                return max_discount * 0.8  # 80% of max discount
+            elif days <= 5:
+                return max_discount * 0.5  # 50% of max discount
+            else:
+                return 0  # No discount for fresh items
+        except:
+            return 0
+    
+    def calculate_loyalty_points(cart):
+        """Calculate loyalty points for cart items."""
+        try:
+            total_items = sum(item.get('quantity', 0) for item in cart.values())
+            return total_items  # 1 point per item
+        except:
+            return 0
+
+# Import replacement utilities
+try:
+    from replacement_utils import (
+        find_nearest_expiry_item, find_best_item_for_cart as replacement_find_best,
+        get_replacement_suggestions, get_replacement_message
+    )
+    REPLACEMENT_UTILS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: replacement_utils not available: {e}")
+    REPLACEMENT_UTILS_AVAILABLE = False
+    
+    # Define fallback functions
+    def find_nearest_expiry_item(item_name, inventory_path=None):
+        return None
+    
+    def replacement_find_best(item_name, min_days_threshold=3):
+        return None
+    
+    def get_replacement_suggestions(item_name, near_expiry_threshold=5):
+        return []
+    
+    def get_replacement_message(days_until_expiry):
+        return "No replacement suggestions available"
+
+# Try to import advanced features
 try:
     from inventory_grouping import (
         group_inventory_by_product, 
         find_freshest_item, 
-        find_near_expiry_replacements,
+        find_near_expiry_replacements as grouping_find_replacements,
         get_product_summary
     )
     GROUPING_AVAILABLE = True
@@ -31,7 +98,20 @@ except ImportError:
     GROUPING_AVAILABLE = False
     print("Warning: inventory_grouping module not available, using fallback functionality")
 
+# Try to import ML prediction
+try:
+    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'models'))
+    if models_dir not in sys.path:
+        sys.path.insert(0, models_dir)
+    from predict_expiry import predict_shelf_life
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("Warning: ML prediction module not available, using fallback functionality")
+
 app = Flask(__name__)
+from flasgger import Swagger
+swagger = Swagger(app) 
 CORS(app)  # Enable CORS for frontend integration
 
 # Base directory for file paths
@@ -46,11 +126,18 @@ def home():
         "features": {
             "grouped_inventory": GROUPING_AVAILABLE,
             "smart_replacement": True,
-            "fresh_item_selection": GROUPING_AVAILABLE
+            "fresh_item_selection": GROUPING_AVAILABLE,
+            "ml_prediction": ML_AVAILABLE,
+            "product_thresholds": True,
+            "loyalty_system": True,
+            "impact_tracking": True
         },
         "endpoints": [
             "/get_inventory",
             "/get_product_details",
+            "/get_grouped_inventory", 
+            "/suggest_replacements",
+            "/suggest_cart_item",
             "/add_to_cart",
             "/add_replacement_to_cart",
             "/remove_from_cart",
@@ -59,7 +146,15 @@ def home():
             "/checkout",
             "/get_alerts",
             "/get_loyalty",
-            "/predict_shelf_life"
+            "/add_loyalty_points",
+            "/predict_shelf_life",
+            "/user_impact",
+            "/update_impact_dash",
+            "/load_product_thresholds",
+            "/find_freshest_item",
+            "/get_product_summary",
+            "/get_replacement_suggestions",
+            "/test_functions"
         ]
     })
 
@@ -128,6 +223,9 @@ def api_add_replacement_to_cart():
     """Add replacement item to cart."""
     try:
         data = request.json
+        if not data or 'user_id' not in data or 'replacement' not in data or 'quantity' not in data:
+            return jsonify({"success": False, "error": "user_id, replacement, and quantity are required"}), 400
+        
         user_id = data['user_id']
         replacement = data['replacement']
         quantity = data['quantity']
@@ -135,13 +233,16 @@ def api_add_replacement_to_cart():
         result = add_replacement_item(user_id, replacement, quantity)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Error adding replacement to cart: {str(e)}"}), 500
 
 @app.route('/remove_from_cart', methods=['POST'])
 def api_remove_from_cart():
     """Remove item from cart."""
     try:
         data = request.json
+        if not data or 'user_id' not in data or 'item_id' not in data:
+            return jsonify({"success": False, "error": "user_id and item_id are required"}), 400
+        
         user_id = data['user_id']
         item_id = data['item_id']
         quantity = data.get('quantity')  # Optional: remove specific quantity
@@ -149,7 +250,7 @@ def api_remove_from_cart():
         result = remove_item_from_cart(user_id, item_id, quantity)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Error removing from cart: {str(e)}"}), 500
 
 @app.route('/get_cart', methods=['GET'])
 def api_get_cart():
@@ -171,25 +272,31 @@ def api_get_cart():
             "count": len(cart_summary["cart"])
         })
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Error getting cart: {str(e)}"}), 500
 
 @app.route('/clear_cart', methods=['POST'])
 def api_clear_cart():
     """Clear user's cart."""
     try:
         data = request.json
+        if not data or 'user_id' not in data:
+            return jsonify({"success": False, "error": "user_id is required"}), 400
+        
         user_id = data['user_id']
         
         result = clear_cart(user_id)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Error clearing cart: {str(e)}"}), 500
 
 @app.route('/checkout', methods=['POST'])
 def api_checkout():
     """Checkout user's cart."""
     try:
         data = request.json
+        if not data or 'user_id' not in data:
+            return jsonify({"success": False, "error": "user_id is required"}), 400
+        
         user_id = data['user_id']
         clear_cart_after = data.get('clear_cart', True)
         
@@ -217,7 +324,7 @@ def api_checkout():
         
         return jsonify(result)
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": f"Error during checkout: {str(e)}"}), 500
 
 @app.route('/get_alerts', methods=['GET'])
 def api_get_alerts():
@@ -285,16 +392,19 @@ def api_predict_shelf_life():
         category = data.get('category')
         storage_type = data.get('storage_type', 'refrigerated')
         
-        # Placeholder prediction logic (replace with actual ML model)
-        predictions = {
-            'cheese': 7,
-            'milk': 5,
-            'bread': 3,
-            'meat': 4,
-            'vegetables': 6
-        }
-        
-        predicted_days = predictions.get(item_name.lower(), 5)  # Default 5 days
+        if ML_AVAILABLE:
+            # Use actual ML model for prediction
+            predicted_days = predict_shelf_life(item_name, category, storage_type)
+        else:
+            # Placeholder prediction logic (replace with actual ML model)
+            predictions = {
+                'cheese': 7,
+                'milk': 5,
+                'bread': 3,
+                'meat': 4,
+                'vegetables': 6
+            }
+            predicted_days = predictions.get(item_name.lower(), 5)  # Default 5 days
         
         return jsonify({
             "success": True,
@@ -396,28 +506,476 @@ def get_product_details():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/get_grouped_inventory', methods=['GET'])
+def api_get_grouped_inventory():
+    """Get inventory grouped by product name with fresh/near-expiry separation."""
+    try:
+        near_expiry_threshold = int(request.args.get('near_expiry_threshold', 5))
+        
+        if GROUPING_AVAILABLE:
+            grouped_data = group_inventory_by_product(near_expiry_threshold=near_expiry_threshold)
+            return jsonify({
+                "success": True,
+                "grouped_products": grouped_data['grouped_products'],
+                "all_grouped": grouped_data['all_grouped'],
+                "total_products": len(grouped_data['all_grouped']),
+                "grouping_enabled": True
+            })
+        else:
+            # Fallback to regular inventory
+            inventory = load_inventory()
+            return jsonify({
+                "success": True,
+                "inventory": inventory,
+                "total_products": len(inventory),
+                "grouping_enabled": False,
+                "message": "Grouping not available, returning individual items"
+            })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error getting grouped inventory: {str(e)}"}), 500
+
+@app.route('/suggest_replacements', methods=['POST'])
+def api_suggest_replacements():
+    """Get replacement suggestions for a product (near-expiry items only)."""
+    try:
+        data = request.json
+        if not data or 'product_name' not in data:
+            return jsonify({"success": False, "error": "product_name is required"}), 400
+        
+        product_name = data['product_name']
+        near_expiry_threshold = data.get('near_expiry_threshold', 5)
+        
+        replacements = get_replacement_suggestions(product_name, near_expiry_threshold)
+        
+        return jsonify({
+            "success": True,
+            "product_name": product_name,
+            "replacements": replacements,
+            "count": len(replacements),
+            "threshold_days": near_expiry_threshold
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error getting replacement suggestions: {str(e)}"}), 500
+
+@app.route('/suggest_cart_item', methods=['POST'])
+def api_suggest_cart_item():
+    """Suggest the best item for adding to cart with replacement options."""
+    try:
+        data = request.json
+        if not data or 'product_name' not in data:
+            return jsonify({"success": False, "error": "product_name is required"}), 400
+        
+        product_name = data['product_name']
+        
+        # Get comprehensive suggestions
+        suggestion = suggest_cart_and_replacements_auto(product_name)
+        
+        return jsonify({
+            "success": True,
+            "product_name": product_name,
+            "best_item": suggestion.get('best_item'),
+            "warning": suggestion.get('warning'),
+            "incentive": suggestion.get('incentive'),
+            "replacements": suggestion.get('replacements', []),
+            "replacement_count": len(suggestion.get('replacements', []))
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error suggesting cart item: {str(e)}"}), 500
+
+@app.route('/add_loyalty_points', methods=['POST'])
+def api_add_loyalty_points():
+    """Add loyalty points to a user."""
+    try:
+        data = request.json
+        if not data or 'user_id' not in data or 'points' not in data:
+            return jsonify({"success": False, "error": "user_id and points are required"}), 400
+        
+        user_id = data['user_id']
+        points = int(data['points'])
+        
+        total_points = add_loyalty_points(user_id, points)
+        
+        return jsonify({
+            "success": True,
+            "user_id": user_id,
+            "points_added": points,
+            "total_loyalty_points": total_points
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error adding loyalty points: {str(e)}"}), 500
+
+@app.route('/update_impact_dash', methods=['POST'])
+def api_update_impact_dash():
+    """Update user's impact dashboard metrics."""
+    try:
+        data = request.json
+        if not data or 'user_id' not in data:
+            return jsonify({"success": False, "error": "user_id is required"}), 400
+        
+        user_id = data['user_id']
+        
+        # Extract metrics with defaults
+        metrics = {
+            'total_food_saved': data.get('total_food_saved', 0),
+            'total_money_saved': data.get('total_money_saved', 0),
+            'total_co2_reduced': data.get('total_co2_reduced', 0),
+            'total_loyalty_points': data.get('total_loyalty_points', 0),
+            'total_orders': data.get('total_orders', 0),
+            'total_items': data.get('total_items', 0)
+        }
+        
+        # Use add_impact_dash for incremental updates or update_impact_dash for absolute values
+        update_type = data.get('update_type', 'add')  # 'add' or 'set'
+        
+        if update_type == 'add':
+            result = add_impact_dash(user_id, **metrics)
+        else:
+            result = update_impact_dash(user_id, **metrics)
+        
+        if result:
+            return jsonify({
+                "success": True,
+                "user_id": user_id,
+                "updated_metrics": result,
+                "update_type": update_type
+            })
+        else:
+            return jsonify({"success": False, "error": "Failed to update impact dashboard"}), 500
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error updating impact dashboard: {str(e)}"}), 500
+
+@app.route('/load_product_thresholds', methods=['GET'])
+def api_load_product_thresholds():
+    """Load product expiry thresholds configuration."""
+    try:
+        thresholds = load_product_thresholds()
+        
+        return jsonify({
+            "success": True,
+            "thresholds": thresholds,
+            "total_configured": len(thresholds)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error loading product thresholds: {str(e)}"}), 500
+
+@app.route('/get_product_threshold', methods=['GET'])
+def api_get_product_threshold():
+    """Get threshold configuration for a specific product."""
+    try:
+        product_name = request.args.get('product_name')
+        if not product_name:
+            return jsonify({"success": False, "error": "product_name is required"}), 400
+        
+        threshold = get_product_thresholds(product_name)
+        
+        return jsonify({
+            "success": True,
+            "product_name": product_name,
+            "threshold": threshold
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error getting product threshold: {str(e)}"}), 500
+
+@app.route('/find_freshest_item', methods=['POST'])
+def api_find_freshest_item():
+    """Find the freshest available item for a product."""
+    try:
+        data = request.json
+        if not data or 'product_name' not in data:
+            return jsonify({"success": False, "error": "product_name is required"}), 400
+        
+        product_name = data['product_name']
+        min_days_threshold = data.get('min_days_threshold', 3)
+        
+        if GROUPING_AVAILABLE:
+            freshest_item = find_freshest_item(product_name, min_days_threshold=min_days_threshold)
+        else:
+            # Fallback using replacement_utils
+            freshest_item = replacement_find_best(product_name, min_days_threshold)
+        
+        if freshest_item:
+            return jsonify({
+                "success": True,
+                "product_name": product_name,
+                "freshest_item": freshest_item,
+                "days_until_expiry": days_until_expiry(freshest_item['expiry_date']),
+                "meets_threshold": days_until_expiry(freshest_item['expiry_date']) >= min_days_threshold
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"No items found for product: {product_name}",
+                "product_name": product_name
+            }), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error finding freshest item: {str(e)}"}), 500
+
+@app.route('/enhanced_predict_shelf_life', methods=['POST'])
+def api_enhanced_predict_shelf_life():
+    """Enhanced shelf life prediction using ML model if available."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "Request data is required"}), 400
+        
+        # Required fields
+        required_fields = ['item_name', 'category']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"{field} is required"}), 400
+        
+        if ML_AVAILABLE:
+            # Use ML model for prediction
+            sample = {
+                "item_name": data['item_name'],
+                "category": data['category'],
+                "storage_type": data.get('storage_type', 'refrigerated'),
+                "current_temp_c": data.get('current_temp_c', 4.0),
+                "humidity": data.get('humidity', 0.85),
+                "price_per_unit": data.get('price_per_unit', 1.0),
+                "current_stock": data.get('current_stock', 10),
+                "sales_per_day": data.get('sales_per_day', 5)
+            }
+            
+            predicted_days = predict_shelf_life(sample)
+            
+            if predicted_days is not None:
+                return jsonify({
+                    "success": True,
+                    "item_name": data['item_name'],
+                    "category": data['category'],
+                    "predicted_shelf_life_days": predicted_days,
+                    "prediction_method": "ml_model",
+                    "sample_data": sample
+                })
+            else:
+                # Fall back to rule-based prediction
+                return api_predict_shelf_life()
+        else:
+            # Use rule-based prediction
+            return api_predict_shelf_life()
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error predicting shelf life: {str(e)}"}), 500
+
+@app.route('/test_functions', methods=['POST'])
+def api_test_functions():
+    """Test all cart functions for a user (for debugging)."""
+    try:
+        data = request.json
+        if not data or 'user_id' not in data:
+            return jsonify({"success": False, "error": "user_id is required"}), 400
+        
+        user_id = data['user_id']
+        
+        # Capture test output
+        import io
+        import sys
+        old_stdout = sys.stdout
+        sys.stdout = captured_output = io.StringIO()
+        
+        try:
+            test_all_functions(user_id)
+            test_output = captured_output.getvalue()
+        finally:
+            sys.stdout = old_stdout
+        
+        return jsonify({
+            "success": True,
+            "user_id": user_id,
+            "test_output": test_output,
+            "message": "All functions tested successfully"
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error testing functions: {str(e)}"}), 500
+
+@app.route('/inventory_items_for_product', methods=['GET'])
+def api_inventory_items_for_product():
+    """Get all inventory items for a specific product name."""
+    try:
+        product_name = request.args.get('product_name')
+        if not product_name:
+            return jsonify({"success": False, "error": "product_name is required"}), 400
+        
+        items = get_inventory_items_for_product(product_name)
+        
+        # Add calculated fields
+        for item in items:
+            item['days_until_expiry'] = days_until_expiry(item['expiry_date'])
+            item['is_near_expiry'] = item['days_until_expiry'] <= 5
+            item['is_critical'] = item['days_until_expiry'] <= 2
+        
+        return jsonify({
+            "success": True,
+            "product_name": product_name,
+            "items": items,
+            "total_items": len(items),
+            "in_stock_items": len([i for i in items if i.get('current_stock', 0) > 0]),
+            "near_expiry_count": len([i for i in items if i.get('days_until_expiry', 999) <= 5]),
+            "critical_count": len([i for i in items if i.get('days_until_expiry', 999) <= 2])
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error getting inventory items: {str(e)}"}), 500
+
+@app.route('/days_until_expiry', methods=['POST'])
+def api_days_until_expiry():
+    """Calculate days until expiry for a given date."""
+    try:
+        data = request.json
+        if not data or 'expiry_date' not in data:
+            return jsonify({"success": False, "error": "expiry_date is required"}), 400
+        
+        expiry_date = data['expiry_date']
+        days = days_until_expiry(expiry_date)
+        
+        return jsonify({
+            "success": True,
+            "expiry_date": expiry_date,
+            "days_until_expiry": days,
+            "is_expired": days < 0,
+            "is_near_expiry": 0 <= days <= 5,
+            "is_critical": 0 <= days <= 2,
+            "urgency_level": "expired" if days < 0 else "critical" if days <= 2 else "warning" if days <= 5 else "safe"
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error calculating days until expiry: {str(e)}"}), 500
+
+# Enhanced error handlers with more detailed logging
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False, 
+        "error": "Bad request - Invalid parameters",
+        "status_code": 400,
+        "timestamp": datetime.now().isoformat()
+    }), 400
+
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({"success": False, "error": "Endpoint not found"}), 404
+    return jsonify({
+        "success": False, 
+        "error": "Endpoint not found",
+        "status_code": 404,
+        "timestamp": datetime.now().isoformat(),
+        "available_endpoints": [
+            "/", "/get_inventory", "/get_grouped_inventory", "/suggest_replacements",
+            "/suggest_cart_item", "/add_to_cart", "/add_replacement_to_cart",
+            "/remove_from_cart", "/get_cart", "/clear_cart", "/checkout",
+            "/get_alerts", "/get_loyalty", "/add_loyalty_points", "/predict_shelf_life",
+            "/enhanced_predict_shelf_life", "/user_impact", "/update_impact_dash",
+            "/load_product_thresholds", "/get_product_threshold", "/find_freshest_item",
+            "/get_product_details", "/test_functions", "/inventory_items_for_product",
+            "/days_until_expiry"
+        ]
+    }), 404
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({"success": False, "error": "Internal server error"}), 500
+    return jsonify({
+        "success": False, 
+        "error": "Internal server error",
+        "status_code": 500,
+        "timestamp": datetime.now().isoformat(),
+        "message": "Please check server logs for details"
+    }), 500
+
+# Health check and debugging endpoint
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Comprehensive health check with feature availability."""
+    try:
+        # Test basic functionality
+        inventory = load_inventory()
+        cart_data = load_cart_data()
+        loyalty_data = load_loyalty_points()
+        thresholds = load_product_thresholds()
+        
+        return jsonify({
+            "success": True,
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "features": {
+                "inventory_loading": len(inventory) > 0,
+                "cart_system": True,
+                "loyalty_system": len(loyalty_data) >= 0,
+                "product_thresholds": len(thresholds) >= 0,
+                "grouping_available": GROUPING_AVAILABLE,
+                "ml_available": ML_AVAILABLE
+            },
+            "stats": {
+                "inventory_items": len(inventory),
+                "configured_thresholds": len(thresholds),
+                "user_loyalty_records": len(loyalty_data)
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
 
 if __name__ == '__main__':
-    print("Starting FreshGuard 2.0 API...")
-    print("Available endpoints:")
-    print("- GET  /get_inventory")
-    print("- POST /add_to_cart")
-    print("- POST /add_replacement_to_cart")
-    print("- POST /remove_from_cart")
-    print("- GET  /get_cart")
-    print("- POST /clear_cart")
-    print("- POST /checkout")
-    print("- GET  /get_alerts")
-    print("- GET  /get_loyalty")
-    print("- POST /predict_shelf_life")
-    print("- GET  /user_impact")
-    print("- GET  /get_product_details")
+    print("\n" + "="*60)
+    print("🚀 Starting FreshGuard 2.0 API Server")
+    print("="*60)
+    print("📋 Available endpoints:")
+    print("   Core Functions:")
+    print("   - GET  /                          - Health check and API info")
+    print("   - GET  /health                    - Detailed health check")
+    print("   - GET  /get_inventory             - Get inventory with filtering")
+    print("   - GET  /get_grouped_inventory     - Get grouped inventory")
+    print("   - GET  /get_product_details       - Get product details")
+    print("   ")
+    print("   Cart Management:")
+    print("   - POST /add_to_cart               - Add item to cart")
+    print("   - POST /add_replacement_to_cart   - Add replacement item")
+    print("   - POST /remove_from_cart          - Remove item from cart")
+    print("   - GET  /get_cart                  - Get cart contents")
+    print("   - POST /clear_cart                - Clear user cart")
+    print("   - POST /checkout                  - Checkout cart")
+    print("   ")
+    print("   Smart Features:")
+    print("   - POST /suggest_replacements      - Get replacement suggestions")
+    print("   - POST /suggest_cart_item         - Suggest best cart item")
+    print("   - POST /find_freshest_item        - Find freshest item")
+    print("   - GET  /inventory_items_for_product - Get all product variants")
+    print("   ")
+    print("   User & Loyalty:")
+    print("   - GET  /get_loyalty               - Get user loyalty points")
+    print("   - POST /add_loyalty_points        - Add loyalty points")
+    print("   - GET  /user_impact               - Get sustainability metrics")
+    print("   - POST /update_impact_dash        - Update impact dashboard")
+    print("   ")
+    print("   Alerts & Predictions:")
+    print("   - GET  /get_alerts                - Get expiring items")
+    print("   - POST /predict_shelf_life        - Predict shelf life (rule-based)")
+    print("   - POST /enhanced_predict_shelf_life - ML-powered prediction")
+    print("   - POST /days_until_expiry         - Calculate expiry days")
+    print("   ")
+    print("   Configuration:")
+    print("   - GET  /load_product_thresholds   - Load threshold config")
+    print("   - GET  /get_product_threshold     - Get specific threshold")
+    print("   ")
+    print("   Testing & Debug:")
+    print("   - POST /test_functions            - Test all functions")
+    print("   ")
+    print("🔧 Features available:")
+    print(f"   - Inventory Grouping: {'✅' if GROUPING_AVAILABLE else '❌'}")
+    print(f"   - ML Predictions: {'✅' if ML_AVAILABLE else '❌'}")
+    print("   - Smart Replacements: ✅")
+    print("   - Loyalty System: ✅")
+    print("   - Impact Tracking: ✅")
+    print("   - Product Thresholds: ✅")
+    print("")
+    print("🌐 Server starting on http://0.0.0.0:5000")
+    print("📚 Frontend can integrate with these endpoints")
+    print("🐛 Use /health for debugging and feature status")
+    print("="*60)
     
     app.run(debug=True, host='0.0.0.0', port=5000)

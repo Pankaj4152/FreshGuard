@@ -5,6 +5,7 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CART_FILE = os.path.join(BASE_DIR, "mock_api", "users_cart.json")
 LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "impact_dash.json")
+THRESHOLD_FILE = os.path.join(BASE_DIR, "mock_api", "product_thresholds.json")
 
 def update_cart_summary(user_id, cart_data):
     """Recalculate and update summary fields for a user's cart."""
@@ -393,3 +394,110 @@ def checkout_cart(user_id, points_earned=None, clear=True, loyalty_file=LOYALTY_
         return summary
     except Exception as e:
         return {"success": False, "message": f"Checkout error: {e}"}
+
+def load_product_thresholds(file_path=THRESHOLD_FILE):
+    """Load per-product expiry thresholds from JSON."""
+    if not os.path.exists(file_path):
+        return {}
+    with open(file_path, 'r') as f:
+        return json.load(f)
+
+def get_product_thresholds(product_name, file_path=THRESHOLD_FILE):
+    """Return thresholds for a product, or sensible defaults."""
+    thresholds = load_product_thresholds(file_path)
+    # Only min_days_for_cart is needed now
+    return thresholds.get(product_name.lower(), {"min_days_for_cart": 3})
+
+def days_until_expiry(expiry_date_str):
+    """Return days until expiry from today."""
+    expiry = datetime.fromisoformat(expiry_date_str)
+    return (expiry.date() - datetime.now().date()).days
+
+def find_best_item_for_cart(product_name, inventory_items, today=None, thresholds=None):
+    """
+    Find the freshest item for cart addition, respecting min_days_for_cart.
+    Returns: (item, warning, incentive)
+    """
+    if today is None:
+        today = datetime.now().date()
+    if thresholds is None:
+        thresholds = get_product_thresholds(product_name)
+    min_days = thresholds["min_days_for_cart"]
+
+    # Calculate days to expiry for each item
+    items_with_days = [
+        (item, days_until_expiry(item['expiry_date']))
+        for item in inventory_items
+    ]
+    # Filter items with at least min_days left
+    eligible = [t for t in items_with_days if t[1] >= min_days]
+    if eligible:
+        # Pick the one with max expiry (freshest)
+        best = max(eligible, key=lambda t: t[1])
+        return best[0], None, None
+    else:
+        # No eligible, pick freshest anyway, but warn and apply incentive
+        best = max(items_with_days, key=lambda t: t[1])
+        warning = f"Only near-expiry items available (expires in {best[1]} days)."
+        incentive = {"discount": 0.2, "extra_points": 10}  # Example
+        return best[0], warning, incentive
+
+def find_near_expiry_replacements(product_name, inventory_items, today=None, thresholds=None):
+    """
+    Find all items with days_until_expiry < min_days_for_cart.
+    Returns: list of items (dicts)
+    """
+    if today is None:
+        today = datetime.now().date()
+    if thresholds is None:
+        thresholds = get_product_thresholds(product_name)
+    min_days = thresholds["min_days_for_cart"]
+    return [
+        item for item in inventory_items
+        if 0 <= days_until_expiry(item['expiry_date']) < min_days
+    ]
+
+def suggest_cart_and_replacements(product_name, inventory_items):
+    """
+    Main API: Suggest best item for cart and all near-expiry replacements.
+    Returns: dict with 'best_item', 'warning', 'incentive', 'replacements'
+    """
+    thresholds = get_product_thresholds(product_name)
+    best_item, warning, incentive = find_best_item_for_cart(product_name, inventory_items, thresholds=thresholds)
+    replacements = find_near_expiry_replacements(product_name, inventory_items, thresholds=thresholds)
+    return {
+        "best_item": best_item,
+        "warning": warning,
+        "incentive": incentive,
+        "replacements": replacements
+    }
+
+def get_inventory_items_for_product(product_name, inventory_file=None):
+    """
+    Fetch all inventory items for a given product_name from the Walmart inventory JSON.
+    Returns a list of item dicts.
+    """
+    if inventory_file is None:
+        inventory_file = os.path.join(BASE_DIR, "mock_api", "current_walmart_inventory.json")
+    if not os.path.exists(inventory_file):
+        return []
+    try:
+        with open(inventory_file, 'r') as f:
+            inventory = json.load(f)
+        # Normalize product name for case-insensitive match
+        product_name_lower = product_name.lower()
+        return [
+            item for item in inventory
+            if item.get("item_name", "").lower() == product_name_lower
+        ]
+    except Exception as e:
+        print(f"Error loading inventory for {product_name}: {e}")
+        return []
+
+def suggest_cart_and_replacements_auto(product_name):
+    """
+    Suggest best item and replacements for a product, fetching inventory automatically.
+    """
+    inventory_items = get_inventory_items_for_product(product_name)
+    return suggest_cart_and_replacements(product_name, inventory_items)
+

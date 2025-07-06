@@ -1,0 +1,12 @@
+{
+  "apple": { "min_days_for_cart": 3 },
+  "banana": { "min_days_for_cart": 2 },
+  "bagel": { "min_days_for_cart": 1 },
+  "cheese": { "min_days_for_cart": 5 },
+  "pork": { "min_days_for_cart": 3 },
+  "milk": { "min_days_for_cart": 20 },
+  "lettuce": { "min_days_for_cart": 2 },
+  "chicken": { "min_days_for_cart": 3 },
+  "bread": { "min_days_for_cart": 3 },
+  "yogurt": { "min_days_for_cart": 4 }
+}
