@@ -381,6 +381,51 @@ class ApiService {
       return await this.addToCart(userId, itemQuery, quantity);
     }
   }
+
+  // Utility methods
+  getDaysUntilExpiry(expiryDate) {
+    if (!expiryDate) return null;
+    
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
+  getExpiryStatus(expiryDate) {
+    const daysLeft = this.getDaysUntilExpiry(expiryDate);
+    if (daysLeft === null) return { status: 'unknown', text: 'Unknown', class: 'text-gray-500' };
+    
+    if (daysLeft <= 0) return { status: 'expired', text: 'Expired', class: 'text-red-600' };
+    if (daysLeft <= 2) return { status: 'critical', text: `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`, class: 'text-red-600' };
+    if (daysLeft <= 7) return { status: 'warning', text: `${daysLeft} days left`, class: 'text-yellow-600' };
+    return { status: 'good', text: `${daysLeft} days left`, class: 'text-green-600' };
+  }
+
+  calculateDiscount(originalPrice, discountedPrice) {
+    if (!originalPrice || !discountedPrice || originalPrice <= discountedPrice) return 0;
+    return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100);
+  }
+
+  formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  formatPrice(price) {
+    if (typeof price !== 'number') return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  }
 }
 
 // Create and export a singleton instance

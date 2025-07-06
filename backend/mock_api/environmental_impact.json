@@ -9,8 +9,8 @@
       "category": "beverages"
     },
     "soda": {
-      "food_saved_kg": 0.35,
       "food_saved_kg": 1.8,
+      "co2_reduced_kg": 2.0,
       "water_saved_liters": 95,
       "land_saved_m2": 0.4,
       "energy_saved_kwh": 2.2,
