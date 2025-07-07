@@ -100,6 +100,8 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
   };
   
   const discountPercent = calculateDiscountPercent();
+  // Force discounts to be shown for specific items if needed (for debugging)
+  // const hasDiscount = true;
   const hasDiscount = discountPercent > 0;
 
   return (
@@ -161,7 +163,10 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
                   </span>
                 </div>
                 <div className="price-current">
-                  {formatPrice(item.discounted_price)} each
+                  <strong className="discounted-price-value">{formatPrice(item.discounted_price)}</strong> each
+                </div>
+                <div className="unit-savings">
+                  <small className="text-success">You save: {formatPrice(item.price_per_unit - item.discounted_price)} per item</small>
                 </div>
               </>
             ) : (

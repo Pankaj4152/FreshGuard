@@ -1,7 +1,7 @@
 {
   "user1": {
-    "total_price": 2.07,
-    "total_price_after_discount": 2.07,
+    "total_price": 9.54,
+    "total_price_after_discount": 9.54,
     "food_saved": 0,
     "co2_reduced": 0,
     "ITEM0015": {
@@ -15,6 +15,24 @@
       "quantity": 1,
       "price_per_unit": 0.69,
       "added_at": "2025-07-07T12:43:56.330426"
+    },
+    "ITEM0021": {
+      "item_name": "Bagel",
+      "quantity": 1,
+      "price_per_unit": 3.49,
+      "added_at": "2025-07-07T15:30:33.539621"
+    },
+    "ITEM0013": {
+      "item_name": "Apple",
+      "quantity": 1,
+      "price_per_unit": 0.99,
+      "added_at": "2025-07-07T15:30:36.902940"
+    },
+    "ITEM0019": {
+      "item_name": "Bread",
+      "quantity": 1,
+      "price_per_unit": 2.99,
+      "added_at": "2025-07-07T15:30:43.028092"
     }
   },
   "test_user": {
@@ -22,26 +40,37 @@
     "total_price_after_discount": 0,
     "food_saved": 0,
     "co2_reduced": 0,
-    "APPLE001": {
+    "DISC001": {
+      "item_id": "DISC001",
       "item_name": "Organic Apples",
-      "item_id": "APPLE001",
-      "quantity": 2,
-      "price_per_unit": 2.99,
-      "discounted_price": 2.99,
+      "quantity": 3,
+      "price_per_unit": 3.99,
+      "discounted_price": 3.19,
       "category": "Fruits",
-      "expiry_date": "2025-07-14",
-      "current_stock": 20,
+      "expiry_date": "2025-07-12",
+      "current_stock": 15,
       "added_at": "2025-07-07T12:00:00.000000"
     },
-    "MILK001": {
+    "DISC002": {
+      "item_id": "DISC002",
       "item_name": "Fresh Milk",
-      "item_id": "MILK001",
-      "quantity": 1,
+      "quantity": 2,
       "price_per_unit": 4.5,
-      "discounted_price": 2.25,
+      "discounted_price": 3.15,
       "category": "Dairy",
+      "expiry_date": "2025-07-09",
+      "current_stock": 8,
+      "added_at": "2025-07-07T12:00:00.000000"
+    },
+    "DISC003": {
+      "item_id": "DISC003",
+      "item_name": "Ripe Bananas",
+      "quantity": 1,
+      "price_per_unit": 2.5,
+      "discounted_price": 1.25,
+      "category": "Fruits",
       "expiry_date": "2025-07-08",
-      "current_stock": 5,
+      "current_stock": 6,
       "added_at": "2025-07-07T12:00:00.000000"
     }
   },
