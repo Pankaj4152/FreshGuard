@@ -511,7 +511,7 @@ const Inventory = ({ backendStatus, addToast }) => {
                 </div>
               </div>
               
-              <div className="col-md-3">
+              {/* <div className="col-md-3">
                 <div className="mb-3">
                   <div className="form-check">
                     <input
@@ -527,7 +527,7 @@ const Inventory = ({ backendStatus, addToast }) => {
                   </div>
                   <small className="text-muted">AI-powered recommendations and replacements</small>
                 </div>
-              </div>
+              </div> */}
               
               <div className="col-md-2">
                 <div className="mb-3">

@@ -205,12 +205,12 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
           </div>
         )}
         
-        {isGrouped && hasNearExpiry && (
+        {/* {isGrouped && hasNearExpiry && (
           <div className="replacement-notice">
             <Clock size={14} />
             <span>Near-expiry alternatives available with discounts</span>
           </div>
-        )}
+        )} */}
         
         <div className="product-actions">
           <button 
@@ -229,12 +229,12 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
           </button>
           
           {/* Smart messaging */}
-          {showSmartFeatures && hasSustainabilityBenefit && (
+          {/* {showSmartFeatures && hasSustainabilityBenefit && (
             <div className="sustainability-message">
               <Leaf size={12} />
               <span>Help reduce waste • Earn bonus points</span>
             </div>
-          )}
+          )} */}
           
           {isUrgent && (product.current_stock || 0) > 0 && (
             <div className="urgent-notice">
@@ -243,12 +243,12 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
             </div>
           )}
           
-          {isGrouped && showSmartFeatures && (
+          {/* {isGrouped && showSmartFeatures && (
             <div className="smart-selection-notice">
               <Zap size={12} />
               <span>AI will pick the freshest item for you</span>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

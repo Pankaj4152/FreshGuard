@@ -1,100 +1,14 @@
 {
   "user1": {
-    "total_price": 0,
-    "total_price_after_discount": 0,
+    "total_price": 2.99,
+    "total_price_after_discount": 2.99,
     "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "user2": {
-    "total_price": 0,
-    "total_price_after_discount": 0,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "user3": {
-    "ITEM0075": {
-      "item_name": "Pork",
+    "co2_reduced": 0,
+    "ITEM0019": {
+      "item_name": "Bread",
       "quantity": 1,
-      "price_per_unit": 7.49,
-      "added_at": "2025-07-06T00:53:10.264103",
-      "loyalty_points": 0,
-      "discount_given": 0
-    },
-    "total_price": 7.49,
-    "total_price_after_discount": 7.49,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "test_user_123": {
-    "ITEM0001": {
-      "item_name": "Cheese",
-      "quantity": 1,
-      "price_per_unit": 5.99,
-      "added_at": "2025-07-06T13:42:28.992939"
-    },
-    "total_price": 5.99,
-    "total_price_after_discount": 5.99,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "test_user_direct": {
-    "ITEM0001": {
-      "item_name": "Cheese",
-      "quantity": 2,
-      "price_per_unit": 5.99,
-      "added_at": "2025-07-06T13:43:47.534944"
-    },
-    "total_price": 11.98,
-    "total_price_after_discount": 11.98,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "test_user": {
-    "ITEM0001": {
-      "item_name": "Cheese",
-      "quantity": 0,
-      "price_per_unit": 5.99,
-      "added_at": "2025-07-06T13:43:47.677363"
-    },
-    "total_price": 0.0,
-    "total_price_after_discount": 0.0,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "": {
-    "ITEM0001": {
-      "item_name": "Cheese",
-      "quantity": 1,
-      "price_per_unit": 5.99,
-      "added_at": "2025-07-06T13:43:47.696511"
-    },
-    "total_price": 5.99,
-    "total_price_after_discount": 5.99,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "test_user_replacement": {
-    "ITEM0001": {
-      "item_name": "Cheese",
-      "quantity": 4,
-      "price_per_unit": 5.99,
-      "added_at": "2025-07-06T13:52:22.312983"
-    },
-    "total_price": 23.96,
-    "total_price_after_discount": 23.96,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "101": {
-    "ITEM0056": {
-      "item_name": "Bagel",
-      "quantity": 1,
-      "price_per_unit": 3.49,
-      "added_at": "2025-07-06T14:19:18.275836"
-    },
-    "total_price": 3.49,
-    "total_price_after_discount": 3.49,
-    "food_saved": 0,
-    "co2_reduced": 0
+      "price_per_unit": 2.99,
+      "added_at": "2025-07-07T09:58:45.588373"
+    }
   }
 }

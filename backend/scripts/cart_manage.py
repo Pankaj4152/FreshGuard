@@ -26,7 +26,7 @@ def load_cart_data(file_path=CART_FILE):
     if not os.path.exists(file_path):
         return {}
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except (json.JSONDecodeError, FileNotFoundError, PermissionError) as e:
         print(f"Error loading cart data: {e}")
@@ -37,7 +37,7 @@ def save_cart_data(cart_data, file_path=CART_FILE):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     temp_file = file_path + ".tmp"
     try:
-        with open(temp_file, 'w') as file:
+        with open(temp_file, 'w', encoding='utf-8') as file:
             json.dump(cart_data, file, indent=2)
         os.replace(temp_file, file_path)
     except Exception as e:
@@ -177,7 +177,7 @@ def get_cart_summary(user_id):
 
 def load_loyalty_points(file_path=LOYALTY_FILE):
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             # Convert to simple user: points mapping
             return {user: info.get("total_loyalty_points", 0) for user, info in data.items()}
@@ -189,7 +189,7 @@ def save_loyalty_points(points_data, file_path=LOYALTY_FILE):
     try:
         # Load the full impact_dash structure
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         else:
             data = {}
@@ -206,7 +206,7 @@ def save_loyalty_points(points_data, file_path=LOYALTY_FILE):
                 }
             data[user]["total_loyalty_points"] = points
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
     except Exception as e:
         print(f"Error saving loyalty points: {e}")
@@ -218,7 +218,7 @@ def add_loyalty_points(user_id, points):
     """
     try:
         # Load the full impact_dash structure as a dict of dicts
-        with open(LOYALTY_FILE, 'r') as f:
+        with open(LOYALTY_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         data = {}
@@ -238,7 +238,7 @@ def add_loyalty_points(user_id, points):
     data[user_id]["total_loyalty_points"] = data[user_id].get("total_loyalty_points", 0) + points
 
     # Save back to file
-    with open(LOYALTY_FILE, 'w') as f:
+    with open(LOYALTY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
 
     return data[user_id]["total_loyalty_points"]
@@ -260,7 +260,7 @@ def update_impact_dash(
     """
     try:
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         else:
             data = {}
@@ -284,7 +284,7 @@ def update_impact_dash(
 
         data[user_id] = user_data
 
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
 
         return user_data
@@ -309,7 +309,7 @@ def add_impact_dash(
     """
     try:
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         else:
             data = {}
@@ -333,7 +333,7 @@ def add_impact_dash(
 
         data[user_id] = user_data
 
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
 
         return user_data
@@ -399,7 +399,7 @@ def load_product_thresholds(file_path=THRESHOLD_FILE):
     """Load per-product expiry thresholds from JSON."""
     if not os.path.exists(file_path):
         return {}
-    with open(file_path, 'r') as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def get_product_thresholds(product_name, file_path=THRESHOLD_FILE):
@@ -527,7 +527,7 @@ def get_inventory_items_for_product(product_name, inventory_file=None):
     if not os.path.exists(inventory_file):
         return []
     try:
-        with open(inventory_file, 'r') as f:
+        with open(inventory_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         # Handle different JSON structures
@@ -568,7 +568,7 @@ def load_environmental_impact(file_path=None):
         file_path = os.path.join(BASE_DIR, "mock_api", "environmental_impact.json")
     
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Warning: Could not load environmental impact data: {e}")
@@ -609,38 +609,49 @@ def load_environmental_impact(file_path=None):
         }
 
 def calculate_item_impact(item_name, quantity=1, category=None):
-    """Calculate environmental impact for a specific item."""
+    """Calculate environmental impact for a specific item using environmental_impact.json data."""
     impact_data = load_environmental_impact()
-    factors = impact_data.get("item_impact_factors", {})
     
-    # Determine category if not provided
-    if not category:
-        item_lower = item_name.lower()
-        if any(meat in item_lower for meat in ['beef', 'chicken', 'pork', 'meat', 'steak']):
-            category = 'meat'
-        elif any(dairy in item_lower for dairy in ['milk', 'cheese', 'yogurt', 'butter']):
-            category = 'dairy'
-        elif any(produce in item_lower for produce in ['apple', 'banana', 'lettuce', 'tomato', 'vegetable', 'fruit']):
-            category = 'produce'
-        elif any(bread in item_lower for bread in ['bread', 'roll', 'bun']):
-            category = 'bread'
-        else:
-            category = 'other'
+    # First try to find specific item data
+    items_data = impact_data.get("items", {})
+    item_key = item_name.lower().strip()
     
-    # Get impact factors for the category
-    category_factors = factors.get(category.lower(), factors.get('other', {}))
-    co2_per_kg = category_factors.get('co2_per_kg', 2.5)
-    avg_weight_kg = category_factors.get('avg_weight_kg', 0.3)
-    
-    # Calculate impact for the quantity
-    total_weight_kg = avg_weight_kg * quantity
-    co2_saved_kg = co2_per_kg * total_weight_kg
+    if item_key in items_data:
+        # Use specific item data
+        item_impact = items_data[item_key]
+        food_saved_kg = item_impact.get("food_saved_kg", 0.5) * quantity
+        co2_reduced_kg = item_impact.get("co2_reduced_kg", 2.0) * quantity
+        category = item_impact.get("category", category or "other")
+    else:
+        # Determine category if not provided
+        if not category:
+            item_lower = item_name.lower()
+            if any(meat in item_lower for meat in ['beef', 'chicken', 'pork', 'meat', 'steak']):
+                category = 'meat'
+            elif any(dairy in item_lower for dairy in ['milk', 'cheese', 'yogurt', 'butter']):
+                category = 'dairy'
+            elif any(produce in item_lower for produce in ['apple', 'banana', 'lettuce', 'tomato', 'vegetable', 'fruit']):
+                category = 'produce'
+            elif any(bakery in item_lower for bakery in ['bread', 'roll', 'bun']):
+                category = 'bakery'
+            elif any(beverage in item_lower for beverage in ['juice', 'soda', 'water', 'drink']):
+                category = 'beverages'
+            else:
+                category = 'other'
+        
+        # Use category defaults from environmental_impact.json
+        category_defaults = impact_data.get("category_defaults", {})
+        category_data = category_defaults.get(category, category_defaults.get("produce", {}))
+        
+        food_saved_kg = category_data.get("food_saved_kg", 0.5) * quantity
+        co2_reduced_kg = category_data.get("co2_reduced_kg", 2.0) * quantity
     
     return {
-        "food_saved_kg": total_weight_kg,
-        "co2_reduced_kg": co2_saved_kg,
+        "food_saved_kg": food_saved_kg,
+        "co2_reduced_kg": co2_reduced_kg,
         "category": category,
-        "quantity": quantity
+        "quantity": quantity,
+        "item_name": item_name
     }
 
 def generate_sustainability_message(impact):
@@ -737,7 +748,7 @@ def load_impact_dash_data(file_path=LOYALTY_FILE):
     """Load impact dash data from JSON file."""
     try:
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
             return {}
