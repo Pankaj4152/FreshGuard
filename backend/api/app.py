@@ -19,7 +19,7 @@ from cart_manage import (
     days_until_expiry, find_best_item_for_cart, find_near_expiry_replacements,
     suggest_cart_and_replacements, get_inventory_items_for_product,
     suggest_cart_and_replacements_auto,
-    get_product_impact_preview, calculate_item_impact
+    get_product_impact_preview, calculate_item_impact, update_item_quantity
 )
 
 # Import available functions from cart_cli
@@ -153,6 +153,7 @@ def home():
             "/add_to_cart",
             "/add_replacement_to_cart",
             "/remove_from_cart",
+            "/update_cart_quantity",
             "/get_cart",
             "/clear_cart",
             "/checkout",
@@ -1088,7 +1089,7 @@ def not_found(error):
         "available_endpoints": [
             "/", "/get_inventory", "/get_grouped_inventory", "/suggest_replacements",
             "/suggest_cart_item", "/add_to_cart", "/add_replacement_to_cart",
-            "/remove_from_cart", "/get_cart", "/clear_cart", "/checkout",
+            "/remove_from_cart", "/update_cart_quantity", "/get_cart", "/clear_cart", "/checkout",
             "/get_alerts", "/get_loyalty", "/add_loyalty_points", "/predict_shelf_life",
             "/enhanced_predict_shelf_life", "/user_impact", "/update_impact_dash",
             "/load_product_thresholds", "/get_product_threshold", "/find_freshest_item",
@@ -1296,6 +1297,26 @@ def load_inventory_from_cli():
     except ImportError:
         return load_inventory_fallback()
 
+@app.route('/update_cart_quantity', methods=['POST'])
+def api_update_cart_quantity():
+    """Update the quantity of an item in the cart."""
+    try:
+        data = request.json
+        if not data or 'user_id' not in data or 'item_id' not in data or 'quantity' not in data:
+            return jsonify({"success": False, "error": "user_id, item_id, and quantity are required"}), 400
+        
+        user_id = data['user_id']
+        item_id = data['item_id']
+        quantity = data['quantity']
+        
+        if not isinstance(quantity, int) or quantity < 0:
+            return jsonify({"success": False, "error": "Quantity must be a non-negative integer"}), 400
+        
+        result = update_item_quantity(user_id, item_id, quantity)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error updating quantity: {str(e)}"}), 500
+
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("🚀 Starting FreshGuard 2.0 API Server")
@@ -1315,6 +1336,7 @@ if __name__ == '__main__':
     print("   - GET  /get_cart                  - Get cart contents")
     print("   - POST /clear_cart                - Clear user cart")
     print("   - POST /checkout                  - Checkout cart")
+    print("   - POST /update_cart_quantity      - Update item quantity in cart")
     print("   ")
     print("   Smart Features:")
     print("   - POST /suggest_replacements      - Get replacement suggestions")

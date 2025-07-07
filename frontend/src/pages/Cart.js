@@ -17,6 +17,7 @@ import {
 
 const Cart = () => {
   const { cart, removeFromCart, clearCart, loading: cartLoading } = useCart();
+  const { user } = useUser();
   const { showSuccess, showError, ToastContainer } = useToast();
   
   // Safe helper functions
@@ -63,8 +64,13 @@ const Cart = () => {
   };
 
   const handleRemoveItem = async (itemId, quantity = null) => {
+    if (!user?.id) {
+      showError('User not logged in');
+      return;
+    }
+    
     setLoading(true);
-    const result = await removeFromCart(itemId, quantity);
+    const result = await removeFromCart(user.id, itemId, quantity);
     
     if (result.success) {
       showSuccess('Item removed from cart');
@@ -75,9 +81,14 @@ const Cart = () => {
   };
 
   const handleClearCart = async () => {
+    if (!user?.id) {
+      showError('User not logged in');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to clear your entire cart?')) {
       setLoading(true);
-      const result = await clearCart();
+      const result = await clearCart(user.id);
       
       if (result.success) {
         showSuccess('Cart cleared successfully');
@@ -181,7 +192,8 @@ const Cart = () => {
                     )}
                     <CartItem
                       item={item}
-                      onRemove={handleRemoveItem}
+                      onUpdate={calculateCartSummary}
+                      onRemove={() => handleRemoveItem(item.item_id)}
                       loading={loading}
                     />
                   </div>

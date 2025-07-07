@@ -780,3 +780,22 @@ def get_user_impact_data(user_id, file_path=LOYALTY_FILE):
             "total_items": 0
         }
 
+def update_item_quantity(user_id, item_id, new_quantity):
+    """
+    Update the quantity of an item in the user's cart.
+    If new_quantity is 0 or less, remove the item completely.
+    """
+    try:
+        if new_quantity <= 0:
+            return remove_item_from_cart(user_id, item_id)
+        
+        cart_data = load_cart_data()
+        if user_id in cart_data and item_id in cart_data[user_id]:
+            cart_data[user_id][item_id]['quantity'] = new_quantity
+            update_cart_summary(user_id, cart_data)
+            save_cart_data(cart_data)
+            return {"success": True, "message": "Quantity updated successfully."}
+        return {"success": False, "message": "Item not found in cart."}
+    except Exception as e:
+        return {"success": False, "message": f"Error updating quantity: {e}"}
+

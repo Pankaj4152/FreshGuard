@@ -102,38 +102,40 @@ const Header = () => {
         </div>
 
         {/* Mobile Navigation */}
-        <nav className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`nav-link ${isActiveLink(item.href) ? 'active' : ''}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span className="flex items-center gap-2">
-                  {Icon && <Icon size={16} />}
-                  {item.name}
-                  {item.badge > 0 && (
-                    <span className="badge badge-danger" style={{ marginLeft: '0.25rem' }}>
-                      {item.badge}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            );
-          })}
-          
-          {/* Mobile User Info */}
-          <div className="nav-link" style={{ pointerEvents: 'none' }}>
-            <span className="flex items-center gap-2">
-              <User size={16} />
-              {user.name}
-              <span className="badge badge-primary">{user.loyaltyPoints} pts</span>
-            </span>
-          </div>
-        </nav>
+        {isMobileMenuOpen && (
+          <nav className="nav-menu mobile-nav">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`nav-link ${isActiveLink(item.href) ? 'active' : ''}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span className="flex items-center gap-2">
+                    {Icon && <Icon size={16} />}
+                    {item.name}
+                    {item.badge > 0 && (
+                      <span className="badge badge-danger" style={{ marginLeft: '0.25rem' }}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              );
+            })}
+            
+            {/* Mobile User Info */}
+            <div className="nav-link" style={{ pointerEvents: 'none' }}>
+              <span className="flex items-center gap-2">
+                <User size={16} />
+                {user.name}
+                <span className="badge badge-primary">{user.loyaltyPoints} pts</span>
+              </span>
+            </div>
+          </nav>
+        )}
       </div>
     </header>
   );

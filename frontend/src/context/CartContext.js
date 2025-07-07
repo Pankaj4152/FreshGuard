@@ -147,31 +147,19 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      if (newQuantity <= 0) {
-        return await removeFromCart(userId, itemId);
+      const response = await apiService.updateCartQuantity(userId, itemId, newQuantity);
+      
+      if (response.success) {
+        await loadCart();
+        return response;
+      } else {
+        setError(response.message || 'Failed to update quantity');
+        return response;
       }
-      
-      // First remove the item completely, then add the new quantity
-      await apiService.removeFromCart(userId, itemId);
-      
-      // Find the item in inventory to get the item_name for re-adding
-      const inventory = await apiService.getInventory();
-      const item = inventory.inventory?.find(i => i.item_id === itemId);
-      
-      if (item) {
-        const response = await apiService.addToCart(userId, item.item_name, newQuantity);
-        if (response.success) {
-          await loadCart();
-          return response;
-        }
-      }
-      
-      // Fallback: just reload the cart
-      await loadCart();
-      return { success: true };
     } catch (error) {
       console.error('Error updating quantity:', error);
       setError(error.message);
+      await loadCart(); // Reload cart to ensure consistency
       return { success: false, error: error.message };
     } finally {
       setLoading(false);

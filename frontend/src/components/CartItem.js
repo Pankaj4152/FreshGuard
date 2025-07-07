@@ -1,10 +1,12 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 import apiService from '../services/api';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 
-const CartItem = ({ item, onUpdate, onRemove }) => {
+const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
   const { updateQuantity, removeFromCart } = useCart();
+  const { user } = useUser();
 
   // Safe helper functions
   const formatPrice = (price) => {
@@ -13,10 +15,15 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
   };
 
   const handleQuantityChange = async (newQuantity) => {
+    if (!user?.id) {
+      console.error('No user ID available');
+      return;
+    }
+    
     if (newQuantity < 1) {
       await handleRemove();
     } else {
-      const result = await updateQuantity(item.item_id, newQuantity);
+      const result = await updateQuantity(user.id, item.item_id, newQuantity);
       if (result.success && onUpdate) {
         onUpdate();
       }
@@ -24,7 +31,12 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
   };
 
   const handleRemove = async () => {
-    const result = await removeFromCart(item.item_id);
+    if (!user?.id) {
+      console.error('No user ID available');
+      return;
+    }
+    
+    const result = await removeFromCart(user.id, item.item_id);
     if (result.success && onRemove) {
       onRemove();
     }
@@ -77,7 +89,7 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
         <button
           className="quantity-btn"
           onClick={() => handleQuantityChange(item.quantity - 1)}
-          disabled={item.quantity <= 1}
+          disabled={loading || item.quantity <= 1}
         >
           <Minus size={16} />
         </button>
@@ -85,6 +97,7 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
         <button
           className="quantity-btn"
           onClick={() => handleQuantityChange(item.quantity + 1)}
+          disabled={loading}
         >
           <Plus size={16} />
         </button>
@@ -104,6 +117,7 @@ const CartItem = ({ item, onUpdate, onRemove }) => {
       <button
         className="btn btn-sm btn-danger"
         onClick={handleRemove}
+        disabled={loading}
         title="Remove from cart"
       >
         <Trash2 size={16} />

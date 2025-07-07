@@ -382,6 +382,17 @@ class ApiService {
     }
   }
 
+  async updateCartQuantity(userId, itemId, quantity) {
+    return await this.request('/update_cart_quantity', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        item_id: itemId,
+        quantity: quantity
+      }),
+    });
+  }
+
   // Utility methods
   getDaysUntilExpiry(expiryDate) {
     if (!expiryDate) return null;
