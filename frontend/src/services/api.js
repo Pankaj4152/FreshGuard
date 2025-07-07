@@ -370,15 +370,20 @@ class ApiService {
           };
         }
         
+        // Return the failed result without additional calls
         return addResult;
       } else {
-        // Fallback to regular add to cart
+        // Fallback to regular add to cart only if no suggestion was attempted
         return await this.addToCart(userId, itemQuery, quantity);
       }
     } catch (error) {
       console.error('Error in addToCartWithSuggestions:', error);
-      // Final fallback to regular add to cart
-      return await this.addToCart(userId, itemQuery, quantity);
+      // Return error response without additional API calls to prevent duplication
+      return { 
+        success: false, 
+        error: 'Failed to add item to cart',
+        message: error.message || 'An error occurred while adding the item'
+      };
     }
   }
 

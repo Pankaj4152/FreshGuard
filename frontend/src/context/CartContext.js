@@ -80,17 +80,9 @@ export const CartProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      // Fallback to regular add to cart
-      try {
-        const fallbackResponse = await apiService.addToCart(userId, itemQuery, quantity);
-        if (fallbackResponse.success) {
-          await loadCart();
-        }
-        return fallbackResponse;
-      } catch (fallbackError) {
-        setError(fallbackError.message);
-        return { success: false, error: fallbackError.message };
-      }
+      
+      setError(error.message);
+      return { success: false, error: error.message };
     } finally {
       setLoading(false);
     }
@@ -228,12 +220,74 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = () => {
     return cart.reduce((total, item) => {
+      const discountedPrice = item.discounted_price || item.price_per_unit;
+      return total + (item.quantity * discountedPrice);
+    }, 0);
+  };
+
+  const getCartOriginalTotal = () => {
+    return cart.reduce((total, item) => {
       return total + (item.quantity * item.price_per_unit);
     }, 0);
   };
 
+  const getCartDiscount = () => {
+    return getCartOriginalTotal() - getCartTotal();
+  };
+
   const getCartItemCount = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getCartSummary = () => {
+    const originalTotal = getCartOriginalTotal();
+    const discountedTotal = getCartTotal();
+    const totalDiscount = originalTotal - discountedTotal;
+    const itemCount = getCartItemCount();
+    
+    return {
+      totalItems: itemCount,
+      totalOriginalPrice: originalTotal,
+      totalDiscountedPrice: discountedTotal,
+      totalDiscount: totalDiscount,
+      loyaltyPointsEarned: itemCount, // 1 point per item
+      estimatedTax: discountedTotal * 0.08,
+      finalTotal: discountedTotal + (discountedTotal * 0.08)
+    };
+  };
+  
+  const getShippingOptions = () => {
+    const cartTotal = getCartTotal();
+    
+    return [
+      {
+        id: 'pickup',
+        name: 'Store Pickup',
+        description: 'Free same-day pickup at store',
+        price: 0,
+        isDefault: true,
+        estimatedDelivery: 'Today after 2 PM',
+        eco: true
+      },
+      {
+        id: 'standard',
+        name: 'Standard Delivery',
+        description: 'Delivery within 2-3 days',
+        price: cartTotal >= 35 ? 0 : 4.99,
+        isDefault: false,
+        estimatedDelivery: 'Wed, Jul 10',
+        eco: false
+      },
+      {
+        id: 'express',
+        name: 'Express Delivery',
+        description: 'Next-day delivery',
+        price: 9.99,
+        isDefault: false,
+        estimatedDelivery: 'Tomorrow, Jul 8',
+        eco: false
+      }
+    ];
   };
 
   const value = {
@@ -248,7 +302,11 @@ export const CartProvider = ({ children }) => {
     checkout,
     loadCart,
     getCartTotal,
-    getCartItemCount
+    getCartOriginalTotal,
+    getCartDiscount,
+    getCartItemCount,
+    getCartSummary,
+    getShippingOptions
   };
 
   return (

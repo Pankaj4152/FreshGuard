@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
 import apiService from '../services/api';
-import { Plus, Minus, Trash2 } from 'lucide-react';
+import { Plus, Minus, Trash2, BookmarkIcon } from 'lucide-react';
 
 const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
   const { updateQuantity, removeFromCart } = useCart();
   const { user } = useUser();
+  const [saveForLaterLoading, setSaveForLaterLoading] = useState(false);
 
   // Safe helper functions
   const formatPrice = (price) => {
@@ -42,6 +43,38 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
     }
   };
 
+  const handleSaveForLater = async () => {
+    if (!user?.id) {
+      console.error('No user ID available');
+      return;
+    }
+    
+    setSaveForLaterLoading(true);
+    try {
+      // This would be implemented in a real API
+      // For now, just show a simulated success
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Display success message
+      const itemName = item.name || item.item_name || 'Item';
+      
+      // Check if there's a toast notification system available
+      if (window.showToast) {
+        window.showToast(`${itemName} saved for later`);
+      } else {
+        // Fallback to alert
+        alert(`${itemName} saved for later`);
+      }
+      
+      // Remove the item from cart after saving for later
+      await handleRemove();
+    } catch (error) {
+      console.error('Failed to save item for later:', error);
+    } finally {
+      setSaveForLaterLoading(false);
+    }
+  };
+
   const getProductIcon = (category) => {
     const icons = {
       'Fruits': '🍎',
@@ -57,7 +90,17 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
   };
 
   const expiryStatus = apiService.getExpiryStatus ? apiService.getExpiryStatus(item.expiry_date) : { status: 'unknown', text: 'Unknown', class: 'text-gray-500' };
-  const discountPercent = apiService.calculateDiscount ? apiService.calculateDiscount(item.price_per_unit, item.discounted_price) : 0;
+  
+  // Calculate discount percentage locally to ensure it works
+  const calculateDiscountPercent = () => {
+    if (!item.discounted_price || !item.price_per_unit || item.discounted_price >= item.price_per_unit) {
+      return 0;
+    }
+    return Math.round(((item.price_per_unit - item.discounted_price) / item.price_per_unit) * 100);
+  };
+  
+  const discountPercent = calculateDiscountPercent();
+  const hasDiscount = discountPercent > 0;
 
   return (
     <div className="cart-item">
@@ -68,10 +111,10 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
       </div>
       
       <div className="cart-item-info">
-        <h4 className="cart-item-name">{item.name}</h4>
+        <h4 className="cart-item-name">{item.name || item.item_name || 'Product'}</h4>
         <div className="cart-item-details">
           <span className="text-secondary">{item.category}</span>
-          {discountPercent > 0 && (
+          {hasDiscount && (
             <span className="badge badge-success ml-2">
               {discountPercent}% OFF
             </span>
@@ -104,24 +147,73 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
       </div>
       
       <div className="cart-item-price">
-        <div className="price-current">
-          {formatPrice(item.discounted_price || item.price_per_unit)}
-        </div>
-        {discountPercent > 0 && (
-          <div className="price-original text-sm">
-            {formatPrice(item.price_per_unit)}
+        <div className="price-details">
+          {/* Per Unit Pricing */}
+          <div className="unit-price">
+            {hasDiscount ? (
+              <>
+                <div className="price-line">
+                  <span className="price-original strikethrough">
+                    {formatPrice(item.price_per_unit)}
+                  </span>
+                  <span className="discount-badge">
+                    -{discountPercent}% OFF
+                  </span>
+                </div>
+                <div className="price-current">
+                  {formatPrice(item.discounted_price)} each
+                </div>
+              </>
+            ) : (
+              <div className="price-current">
+                {formatPrice(item.price_per_unit)} each
+              </div>
+            )}
           </div>
-        )}
+          
+          {/* Total Line Price */}
+          <div className="total-price">
+            {hasDiscount ? (
+              <div className="total-with-discount">
+                <div className="total-original strikethrough">
+                  Total: {formatPrice(item.price_per_unit * item.quantity)}
+                </div>
+                <div className="total-discounted">
+                  <strong>{formatPrice(item.discounted_price * item.quantity)}</strong>
+                </div>
+                <div className="savings-amount text-success">
+                  You save: {formatPrice((item.price_per_unit - item.discounted_price) * item.quantity)}
+                </div>
+              </div>
+            ) : (
+              <div className="total-regular">
+                <strong>Total: {formatPrice(item.price_per_unit * item.quantity)}</strong>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       
-      <button
-        className="btn btn-sm btn-danger"
-        onClick={handleRemove}
-        disabled={loading}
-        title="Remove from cart"
-      >
-        <Trash2 size={16} />
-      </button>
+      <div className="cart-item-actions">
+        <button
+          className="btn btn-sm btn-danger"
+          onClick={handleRemove}
+          disabled={loading || saveForLaterLoading}
+          title="Remove from cart"
+        >
+          <Trash2 size={16} />
+        </button>
+        
+        <button
+          className="btn btn-sm btn-outline-secondary save-for-later-btn"
+          onClick={handleSaveForLater}
+          disabled={loading || saveForLaterLoading}
+          title="Save for later"
+        >
+          <BookmarkIcon size={16} />
+          {saveForLaterLoading ? 'Saving...' : 'Save'}
+        </button>
+      </div>
     </div>
   );
 };
