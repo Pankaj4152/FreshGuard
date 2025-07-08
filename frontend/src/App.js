@@ -13,8 +13,10 @@ import TestAPI from './pages/TestAPI';
 import TestDashboard from './pages/TestDashboard';
 import { CartProvider } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
-import apiService from './services/api';
 import './App.css';
+import './styles/cart-discounts.css';
+import './styles/dashboard-enhanced.css';
+import apiService from './services/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);

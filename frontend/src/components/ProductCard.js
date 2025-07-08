@@ -7,11 +7,15 @@ import {
   Clock,
   Star,
   Zap,
-  Leaf
+  Leaf,
+  Plus,
+  Minus
 } from 'lucide-react';
 
 const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
   const [loading, setLoading] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   if (!product) return null;
 
@@ -19,20 +23,43 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if ((product.current_stock || 0) <= 0) {
+    if ((product.current_stock || 0) <= 0 || isAddingToCart) {
       return;
     }
     
     setLoading(true);
+    setIsAddingToCart(true);
     
     try {
-      // Pass the product and quantity to the parent handler
-      await onAddToCart(product, 1);
+      // Pass the product and selected quantity to the parent handler
+      await onAddToCart(product, quantity);
     } catch (error) {
       console.error('Error adding to cart:', error);
     } finally {
       setLoading(false);
+      // Prevent rapid clicking by adding a small delay
+      setTimeout(() => {
+        setIsAddingToCart(false);
+      }, 1000);
     }
+  };
+
+  const handleQuantityChange = (newQuantity) => {
+    const maxStock = product.current_stock || 0;
+    const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
+    setQuantity(validQuantity);
+  };
+
+  const incrementQuantity = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleQuantityChange(quantity + 1);
+  };
+
+  const decrementQuantity = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleQuantityChange(quantity - 1);
   };
 
   const getProductIcon = (category) => {
@@ -163,12 +190,30 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
         </div>
         
         <div className="product-price">
-          <span className="price-current">
-            {formatPrice(finalPrice)}
-          </span>
-          {hasDiscount && (
-            <span className="price-original">
-              {formatPrice(originalPrice)}
+          {hasDiscount ? (
+            <div className="price-with-discount">
+              <div className="price-line">
+                <span className="price-original strikethrough">
+                  {formatPrice(originalPrice)}
+                </span>
+                {discountPercent > 0 && (
+                  <span className="discount-badge">
+                    -{discountPercent}% OFF
+                  </span>
+                )}
+              </div>
+              <div className="price-current-line">
+                <span className="price-current emphasized">
+                  {formatPrice(finalPrice)}
+                </span>
+                <span className="savings-text">
+                  Save {formatPrice(originalPrice - finalPrice)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <span className="price-current emphasized">
+              {formatPrice(finalPrice)}
             </span>
           )}
           {isGrouped && product.price_range && product.price_range.min !== product.price_range.max && (
@@ -213,19 +258,41 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
         )} */}
         
         <div className="product-actions">
+          {/* Quantity Selector */}
+          <div className="quantity-selector">
+            <button 
+              className="quantity-btn"
+              onClick={decrementQuantity}
+              disabled={quantity <= 1 || loading || isAddingToCart}
+              title="Decrease quantity"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="quantity-display">{quantity}</span>
+            <button 
+              className="quantity-btn"
+              onClick={incrementQuantity}
+              disabled={quantity >= (product.current_stock || 0) || loading || isAddingToCart}
+              title="Increase quantity"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+
+          {/* Add to Cart Button */}
           <button 
             className={`btn btn-primary btn-add-to-cart ${
               (product.current_stock || 0) <= 0 ? 'btn-disabled' : ''
-            } ${loading ? 'btn-loading' : ''}`}
+            } ${loading || isAddingToCart ? 'btn-loading' : ''}`}
             onClick={handleAddToCart}
-            disabled={(product.current_stock || 0) <= 0 || loading}
+            disabled={(product.current_stock || 0) <= 0 || loading || isAddingToCart}
             title={isGrouped ? "We'll select the freshest available item for you" : "Add to cart"}
           >
             <ShoppingCart size={16} />
-            {loading ? 'Adding...' : 
+            {loading || isAddingToCart ? 'Adding...' : 
              (product.current_stock || 0) <= 0 ? 'Out of Stock' : 
-             isGrouped ? 'Add Fresh Item' : 
-             hasSustainabilityBenefit ? 'Save & Add' : 'Add to Cart'}
+             isGrouped ? `Add ${quantity} Fresh Item${quantity > 1 ? 's' : ''}` : 
+             hasSustainabilityBenefit ? `Save & Add ${quantity}` : `Add ${quantity} to Cart`}
           </button>
           
           {/* Smart messaging */}

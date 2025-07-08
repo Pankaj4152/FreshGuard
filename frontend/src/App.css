@@ -392,15 +392,27 @@
 }
 
 .price-current {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: bold;
   color: #0071ce;
 }
 
 .price-original {
-  font-size: 1rem;
   color: #6b7280;
   text-decoration: line-through;
+  font-size: 0.875rem;
+}
+
+.price-with-discount {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.price-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .product-meta {
@@ -448,6 +460,7 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 1rem;
+  align-items: stretch;
 }
 
 .btn-add-to-cart {
@@ -532,6 +545,59 @@
   color: var(--walmart-blue);
 }
 
+.cart-item-price .price-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 180px;
+  text-align: right;
+}
+
+.cart-item-price .unit-price {
+  font-size: 0.875rem;
+}
+
+.cart-item-price .total-price {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.5rem;
+}
+
+.cart-item-price .price-line {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.cart-item-price .discount-badge {
+  background: #dc2626;
+  color: white;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cart-item-price .savings-amount {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.cart-item-price .total-with-discount {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cart-item-price .total-original {
+  font-size: 0.875rem;
+}
+
+.cart-item-price .total-discounted {
+  color: #059669;
+  font-size: 1rem;
+}
+
 .quantity-controls {
   display: flex;
   align-items: center;
@@ -549,10 +615,12 @@
   justify-content: center;
   cursor: pointer;
   color: var(--text-primary);
+  transition: all 0.2s ease;
 }
 
-.quantity-btn:hover {
+.quantity-btn:hover:not(:disabled) {
   background: var(--walmart-gray-light);
+  border-color: var(--walmart-blue);
 }
 
 .quantity-btn:disabled {
@@ -566,6 +634,47 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 0.25rem;
+}
+
+/* Quantity Selector Styles */
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  justify-content: center;
+}
+
+.quantity-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.quantity-btn:hover:not(:disabled) {
+  background: var(--walmart-gray-light);
+  border-color: var(--walmart-blue);
+}
+
+.quantity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-display {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
 }
 
 /* Alert Styles */
@@ -1835,4 +1944,343 @@
   border-radius: 1rem;
   font-size: 0.7rem;
   font-weight: 600;
+}
+
+/* Enhanced Cart Summary Styles */
+.summary-item.detailed {
+  padding: 1rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.summary-item.detailed:last-child {
+  border-bottom: none;
+}
+
+.summary-item .item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.summary-item .item-details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-item .item-discount-badge {
+  background: #dc2626;
+  color: white;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.summary-item .price-breakdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.summary-item .original-price.strikethrough {
+  font-size: 0.875rem;
+}
+
+.summary-item .discounted-price {
+  color: #059669;
+}
+
+.summary-item .savings {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.summary-row.discount-detail,
+.summary-row.subtotal-after-discount,
+.summary-row.shipping {
+  background: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+}
+
+.summary-row .discount-breakdown,
+.summary-row .tax-breakdown,
+.summary-row .shipping-breakdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-row .total-breakdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-row .total-savings {
+  font-size: 0.875rem;
+}
+
+.summary-row.total .total-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.summary-divider.thick {
+  height: 3px;
+  background: #e5e7eb;
+  margin: 1rem 0;
+}
+
+/* Enhanced Benefits Section */
+.benefits-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border-left: 3px solid #059669;
+}
+
+.benefit-icon-wrapper {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.benefit-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.benefit-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.benefit-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Enhanced CSS styles for ProductCard pricing display */
+.product-price .price-current.emphasized {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.product-price .price-current-line {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.product-price .savings-text {
+  font-size: 0.875rem;
+  color: #059669;
+  font-weight: 600;
+}
+
+.product-price .price-original.strikethrough {
+  text-decoration: line-through;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.product-price .discount-badge {
+  background: #dc2626;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.product-price .price-with-discount {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.product-price .price-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.product-card:hover .price-current.emphasized {
+  color: #047857;
+}
+
+.product-card:hover .discount-badge {
+  background: #b91c1c;
+}
+
+/* Responsive pricing adjustments */
+@media (max-width: 768px) {
+  .product-price .price-current.emphasized {
+    font-size: 1.125rem;
+  }
+  
+  .product-price .savings-text {
+    font-size: 0.75rem;
+  }
+  
+  .product-price .discount-badge {
+    font-size: 0.6875rem;
+    padding: 0.1875rem 0.375rem;
+  }
+}
+
+/* Save for Later Button */
+.cart-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.save-for-later-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Shipping Options Styling */
+.shipping-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.shipping-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shipping-option:hover {
+  border-color: #d1d5db;
+  background-color: #f9fafb;
+}
+
+.shipping-option.selected {
+  border-color: #047857;
+  background-color: rgba(4, 120, 87, 0.05);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.shipping-option-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.25rem;
+}
+
+.shipping-option-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.shipping-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shipping-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.shipping-price {
+  font-weight: 600;
+  color: #047857;
+}
+
+.shipping-description {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.shipping-meta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.shipping-eta {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.eco-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #047857;
+  background-color: rgba(4, 120, 87, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shipping-option {
+    padding: 0.75rem;
+  }
+  
+  .shipping-option-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .shipping-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .cart-item-actions {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+  
+  .save-for-later-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
 }
