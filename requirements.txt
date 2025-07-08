@@ -2,3 +2,5 @@ pandas
 numpy<2
 scikit-learn
 joblib
+flasgger
+flask

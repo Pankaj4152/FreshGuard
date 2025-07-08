@@ -46,7 +46,7 @@ def save_cart_data(cart_data, file_path=CART_FILE):
         print(f"Error saving cart data: {e}")
         raise
 
-def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit):
+def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit, discount_given=0):
     """Add or update an item in a user's cart."""
     try:
         cart_data = load_cart_data()
@@ -54,12 +54,18 @@ def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit):
             cart_data[user_id] = {}
         if item_id in cart_data[user_id]:
             cart_data[user_id][item_id]['quantity'] += quantity
+            cart_data[user_id][item_id]['discount_given'] = discount_given
+            cart_data[user_id][item_id]['discounted_price'] = round(
+                cart_data[user_id][item_id]['price_per_unit'] * (1 - discount_given / 100), 2
+            )
         else:
             cart_data[user_id][item_id] = {
                 'item_name': item_name,
                 'quantity': quantity,
                 'price_per_unit': price_per_unit,
-                'added_at': datetime.now().isoformat()
+                'added_at': datetime.now().isoformat(),
+                'discount_given': discount_given,
+                'discounted_price': round(price_per_unit * (1 - discount_given / 100), 2)
             }
         update_cart_summary(user_id, cart_data)
         save_cart_data(cart_data)
@@ -145,20 +151,20 @@ def get_cart_total(user_id):
         return 0
 
 def get_cart_summary(user_id):
-    """Return a summary of the user's cart, including summary fields."""
+    """Return a summary of the user's cart, including summary fields and discount info."""
     try:
         cart_data = load_cart_data()
         user_cart = cart_data.get(user_id, {})
         items = [
             {
                 "item_id": item_id,
-                "item_name": item.get('item_name', ''),
-                "quantity": item.get('quantity', 0),
-                "price_per_unit": item.get('price_per_unit', 0),
-                "added_at": item.get('added_at', ''),
-                "subtotal": item.get('quantity', 0) * item.get('price_per_unit', 0),
-                "loyalty_points": item.get('loyalty_points', 0),
-                "discount_given": item.get('discount_given', 0)
+                "item_name": item['item_name'],
+                "quantity": item['quantity'],
+                "price_per_unit": item['price_per_unit'],
+                "added_at": item['added_at'],
+                "subtotal": item['quantity'] * item['price_per_unit'],
+                "discount_given": item.get('discount_given', 0),
+                "discounted_price": item.get('discounted_price', item['price_per_unit'])
             }
             for item_id, item in user_cart.items()
             if not item_id.startswith('total_') and item_id not in ['food_saved', 'co2_reduced']
