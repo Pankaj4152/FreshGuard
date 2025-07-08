@@ -1,7 +1,7 @@
 {
   "user1": {
-    "total_price": 14.83,
-    "total_price_after_discount": 14.83,
+    "total_price": 16.38,
+    "total_price_after_discount": 16.38,
     "food_saved": 0,
     "co2_reduced": 0,
     "ITEM0038": {
@@ -10,17 +10,13 @@
       "price_per_unit": 0.69,
       "added_at": "2025-07-07T12:43:56.330426"
     },
-    "ITEM0021": {
-      "item_name": "Bagel",
-      "quantity": 1,
-      "price_per_unit": 3.49,
-      "added_at": "2025-07-07T15:30:33.539621"
-    },
     "ITEM0013": {
       "item_name": "Apple",
-      "quantity": 1,
+      "quantity": 4,
       "price_per_unit": 0.99,
-      "added_at": "2025-07-07T15:30:36.902940"
+      "added_at": "2025-07-07T15:30:36.902940",
+      "discount_given": 0,
+      "discounted_price": 0.99
     },
     "ITEM0019": {
       "item_name": "Bread",
@@ -33,6 +29,22 @@
       "quantity": 1,
       "price_per_unit": 2.99,
       "added_at": "2025-07-08T23:54:20.572664"
+    },
+    "ITEM0015": {
+      "item_name": "Banana",
+      "quantity": 2,
+      "price_per_unit": 0.69,
+      "added_at": "2025-07-09T00:14:00.637889",
+      "discount_given": 0,
+      "discounted_price": 0.69
+    },
+    "ITEM0068": {
+      "item_name": "Banana",
+      "quantity": 1,
+      "price_per_unit": 0.69,
+      "added_at": "2025-07-09T00:14:04.757827",
+      "discount_given": 0,
+      "discounted_price": 0.69
     }
   },
   "test_user": {
