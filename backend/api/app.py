@@ -125,8 +125,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "impact_dash.json")
 
 app = Flask(__name__)
-from flasgger import Swagger
-swagger = Swagger(app) 
+# from flasgger import Swagger
+# swagger = Swagger(app) 
 CORS(app)  # Enable CORS for frontend integration
 
 @app.route('/', methods=['GET'])

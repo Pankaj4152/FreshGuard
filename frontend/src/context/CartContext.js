@@ -80,7 +80,7 @@ export const CartProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      
+
       setError(error.message);
       return { success: false, error: error.message };
     } finally {
@@ -256,6 +256,10 @@ export const CartProvider = ({ children }) => {
     };
   };
   
+  const calculateCartSummary = () => {
+    return getCartSummary();
+  };
+  
   const getShippingOptions = () => {
     const cartTotal = getCartTotal();
     
@@ -306,6 +310,7 @@ export const CartProvider = ({ children }) => {
     getCartDiscount,
     getCartItemCount,
     getCartSummary,
+    calculateCartSummary,
     getShippingOptions
   };
 

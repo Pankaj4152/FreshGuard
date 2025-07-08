@@ -269,7 +269,7 @@ const Cart = () => {
                           <span className="item-category text-muted">{item.category}</span>
                           {hasItemDiscount && (
                             <span className="item-discount-badge">
-                              {discountPercent}% OFF
+                              -{discountPercent}% OFF
                             </span>
                           )}
                         </div>
