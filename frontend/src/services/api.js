@@ -340,11 +340,10 @@ class ApiService {
       const suggestion = await this.suggestCartItem(itemQuery);
       
       if (suggestion.success && suggestion.best_item) {
-        // Add the suggested best item to cart
+        // Add the suggested best item to cart (ONLY CALL)
         const addResult = await this.addToCart(userId, itemQuery, quantity);
         
         if (addResult.success) {
-          // Include suggestion metadata in the response
           return {
             ...addResult,
             best_item: suggestion.best_item,
@@ -361,7 +360,7 @@ class ApiService {
           return {
             success: false,
             message: addResult.message || 'Item not available, but alternatives found',
-            replacement: suggestion.replacements[0], // Primary replacement
+            replacement: suggestion.replacements[0],
             replacements: suggestion.replacements,
             hasReplacements: true,
             warning: suggestion.warning,
@@ -370,15 +369,14 @@ class ApiService {
           };
         }
         
-        // Return the failed result without additional calls
         return addResult;
       } else {
-        // Fallback to regular add to cart only if no suggestion was attempted
+        // If suggestion service fails, make a single direct call
         return await this.addToCart(userId, itemQuery, quantity);
       }
     } catch (error) {
       console.error('Error in addToCartWithSuggestions:', error);
-      // Return error response without additional API calls to prevent duplication
+      // Don't make another API call - just return error
       return { 
         success: false, 
         error: 'Failed to add item to cart',
