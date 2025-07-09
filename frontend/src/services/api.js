@@ -78,11 +78,12 @@ class ApiService {
     });
   }
 
-  async addReplacementToCart(userId, replacement, quantity) {
+  async addReplacementToCart(userId, originalItemId, replacement, quantity) {
     return await this.request('/add_replacement_to_cart', {
       method: 'POST',
       body: JSON.stringify({
         user_id: userId,
+        original_item_id: originalItemId,
         replacement: replacement,
         quantity: quantity
       }),

@@ -218,8 +218,8 @@ def add_item_with_replacement(user_id, item_query, quantity):
             "error": f"Error adding item to cart: {str(e)}"
         }
 
-def add_replacement_item(user_id, replacement_item, quantity):
-    """Add a replacement item to cart."""
+def add_replacement_item(user_id, original_item_id, replacement_item, quantity):
+    """Add a replacement item to cart and remove the original item."""
     try:
         if not CART_MANAGE_AVAILABLE:
             return {
@@ -239,12 +239,22 @@ def add_replacement_item(user_id, replacement_item, quantity):
                     "error": f"Replacement item '{replacement_item}' not found"
                 }
         
+        # Remove the original item from the cart
+        if original_item_id:
+            remove_item_from_cart(user_id, original_item_id, quantity=None)  # Remove all quantity of original
+
+        # Calculate discount for the replacement item
+        discount = 0
+        if 'expiry_date' in item:
+            discount = calculate_discount(item['expiry_date'])
+
         result = add_item_to_cart(
             user_id=user_id,
             item_id=item['item_id'],
             item_name=item['item_name'],
             quantity=quantity,
-            price_per_unit=item['price_per_unit']
+            price_per_unit=item['price_per_unit'],
+            discount_given=discount
         )
         
         if result.get('success'):

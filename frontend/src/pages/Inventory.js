@@ -307,7 +307,8 @@ const Inventory = ({ backendStatus, addToast }) => {
 
   const handleReplacementAccept = async (replacement) => {
     try {
-      const result = await addReplacementToCart('user1', replacement, 1);
+      const originalItemId = replacement.original?.item_id;
+      const result = await addReplacementToCart('user1', originalItemId, replacement, 1);
       
       if (result.success) {
         const replacementName = replacement.item_name || replacement.name || 'Replacement';

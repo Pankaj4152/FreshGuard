@@ -27,7 +27,8 @@ try:
     from cart_cli import (
         load_inventory, find_item_in_inventory,
         add_item_with_replacement, add_replacement_item,
-        test_all_functions
+        test_all_functions,
+        load_inventory as cli_load_inventory
     )
     CART_CLI_AVAILABLE = True
 except ImportError as e:
@@ -185,7 +186,7 @@ def get_inventory():
             inventory = grouped_data['all_grouped']
         elif CART_CLI_AVAILABLE:
             # Use original individual item approach if cart_cli is available
-            inventory = load_inventory()
+            inventory = cli_load_inventory()
         else:
             # Fallback: load directly from JSON file
             inventory = load_inventory_fallback()
@@ -396,11 +397,12 @@ def api_add_replacement_to_cart():
         user_id = data['user_id']
         replacement = data['replacement']
         quantity = data['quantity']
+        original_item_id = data.get('original_item_id')  # Get the original item's ID
         
-        result = add_replacement_item(user_id, replacement, quantity)
+        result = add_replacement_item(user_id, original_item_id, replacement, quantity)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"success": False, "error": f"Error adding replacement to cart: {str(e)}"}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/remove_from_cart', methods=['POST'])
 def api_remove_from_cart():
@@ -1239,40 +1241,14 @@ def get_default_sensor_data(storage_type):
     }
 
 def load_inventory_fallback():
-    """Fallback function to load inventory directly from JSON file."""
+    """Fallback to load inventory directly from the JSON file if other methods fail."""
     try:
-        # Try to load from current_walmart_inventory.json
-        inventory_file = os.path.join(BASE_DIR, "mock_api", "current_walmart_inventory.json")
-        if os.path.exists(inventory_file):
-            with open(inventory_file, 'r') as f:
-                data = json.load(f)
-                return data.get('inventory', [])
-        
-        # Try alternative inventory file locations
-        alternative_paths = [
-            os.path.join(BASE_DIR, "models", "walmart_inventory.json"),
-            os.path.join(BASE_DIR, "models", "data", "walmart_inventory.json"),
-            os.path.join(BASE_DIR, "mock_api", "walmart_inventory.json")
-        ]
-        
-        for path in alternative_paths:
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                    # Handle different JSON structures
-                    if isinstance(data, list):
-                        return data
-                    elif isinstance(data, dict) and 'inventory' in data:
-                        return data['inventory']
-                    else:
-                        return []
-        
-        # If no files found, return empty list
-        print("Warning: No inventory files found, returning empty inventory")
-        return []
-        
+        file_path = os.path.join(BASE_DIR, "mock_api", "current_walmart_inventory.json")
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            return data.get("inventory", [])
     except Exception as e:
-        print(f"Error loading inventory fallback: {e}")
+        print(f"Error in load_inventory_fallback: {e}")
         return []
 
 # Fallback function for loading inventory when cart_cli is not available
