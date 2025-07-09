@@ -24,7 +24,7 @@ const Header = () => {
   const navigation = [
     { name: 'Home', href: '/', icon: null },
     { name: 'Inventory', href: '/inventory', icon: null },
-    { name: 'Alerts', href: '/alerts', icon: AlertCircle, badge: criticalAlerts.length },
+    // { name: 'Alerts', href: '/alerts', icon: AlertCircle, badge: criticalAlerts.length },
     { name: 'Dashboard', href: '/dashboard', icon: Award },
   ];
 

@@ -302,10 +302,10 @@ const Home = () => {
             Every purchase makes a difference. Help us reduce food waste and build a better future.
           </p>
           <div className="flex justify-center gap-4">
-            <Link to="/alerts" className="btn btn-secondary">
+            {/* <Link to="/alerts" className="btn btn-secondary">
               <AlertTriangle size={20} />
               View Alerts
-            </Link>
+            </Link> */}
             <Link to="/dashboard" className="btn btn-outline" style={{ color: 'white', borderColor: 'white' }}>
               <Users size={20} />
               Track Impact

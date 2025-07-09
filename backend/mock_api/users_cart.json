@@ -1,7 +1,7 @@
 {
   "user1": {
-    "total_price": 7.15,
-    "total_price_after_discount": 7.15,
+    "total_price": 16.41,
+    "total_price_after_discount": 16.41,
     "food_saved": 0,
     "co2_reduced": 0,
     "ITEM0021": {
@@ -22,11 +22,27 @@
     },
     "ITEM0013": {
       "item_name": "Apple",
-      "quantity": 3,
+      "quantity": 5,
       "price_per_unit": 0.99,
       "added_at": "2025-07-09T19:55:04.553077",
       "discount_given": 0,
       "discounted_price": 0.99
+    },
+    "ITEM0001": {
+      "item_name": "Cheese",
+      "quantity": 1,
+      "price_per_unit": 5.99,
+      "added_at": "2025-07-09T23:51:46.598257",
+      "discount_given": 0,
+      "discounted_price": 5.99
+    },
+    "ITEM0017": {
+      "item_name": "Carrot",
+      "quantity": 1,
+      "price_per_unit": 1.29,
+      "added_at": "2025-07-09T23:52:49.204195",
+      "discount_given": 0,
+      "discounted_price": 1.29
     }
   },
   "test_user": {
