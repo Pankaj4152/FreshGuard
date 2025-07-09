@@ -11,11 +11,13 @@ import Dashboard from './pages/Dashboard';
 import Alerts from './pages/Alerts';
 import TestAPI from './pages/TestAPI';
 import TestDashboard from './pages/TestDashboard';
+import RedeemPoints from './pages/RedeemPoints';
 import { CartProvider } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
 import './App.css';
 import './styles/cart-discounts.css';
 import './styles/dashboard-enhanced.css';
+import './styles/redeem-points.css';
 import apiService from './services/api';
 
 function App() {
@@ -123,6 +125,7 @@ function App() {
                 <Route path="/alerts" element={<Alerts backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-api" element={<TestAPI backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-dashboard" element={<TestDashboard />} />
+                <Route path="/redeem-points" element={<RedeemPoints />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

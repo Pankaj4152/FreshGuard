@@ -1,0 +1,44 @@
+{
+  "items": [
+    {
+      "id": "discount_10",
+      "name": "10% Off Next Purchase",
+      "description": "Get 10% off on your next purchase",
+      "pointsCost": 100,
+      "type": "discount",
+      "value": 10
+    },
+    {
+      "id": "discount_20",
+      "name": "20% Off Next Purchase",
+      "description": "Get 20% off on your next purchase",
+      "pointsCost": 200,
+      "type": "discount",
+      "value": 20
+    },
+    {
+      "id": "free_delivery",
+      "name": "Free Delivery",
+      "description": "Get free delivery on your next order",
+      "pointsCost": 50,
+      "type": "delivery",
+      "value": "free"
+    },
+    {
+      "id": "premium_status",
+      "name": "1 Month Premium Status",
+      "description": "Upgrade to Premium status for 1 month",
+      "pointsCost": 500,
+      "type": "status",
+      "duration": 30
+    },
+    {
+      "id": "eco_friendly_bag",
+      "name": "Eco-Friendly Shopping Bag",
+      "description": "Get a reusable eco-friendly shopping bag",
+      "pointsCost": 75,
+      "type": "product",
+      "quantity": 1
+    }
+  ]
+}

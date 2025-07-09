@@ -9,7 +9,8 @@ import {
   Menu, 
   X, 
   AlertCircle,
-  Award
+  Award,
+  Gift
 } from 'lucide-react';
 
 const Header = () => {
@@ -26,6 +27,7 @@ const Header = () => {
     { name: 'Inventory', href: '/inventory', icon: null },
     { name: 'Alerts', href: '/alerts', icon: AlertCircle, badge: criticalAlerts.length },
     { name: 'Dashboard', href: '/dashboard', icon: Award },
+    { name: 'Redeem Points', href: '/redeem-points', icon: Gift },
   ];
 
   const isActiveLink = (href) => {

@@ -1,11 +1,11 @@
 {
   "user1": {
-    "loyalty_points": 185,
+    "loyalty_points": 85,
     "total_orders": 8,
     "total_saved_kg": 12.5,
     "level": "Silver",
     "created_date": "2025-01-01",
-    "last_active": "2025-07-06"
+    "last_active": "2025-07-09T22:25:53.568793"
   },
   "user2": {
     "loyalty_points": 95,

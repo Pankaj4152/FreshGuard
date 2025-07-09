@@ -129,6 +129,10 @@ app = Flask(__name__)
 # swagger = Swagger(app) 
 CORS(app)  # Enable CORS for frontend integration
 
+# Register blueprints
+from loyalty_routes import loyalty
+app.register_blueprint(loyalty)
+
 @app.route('/', methods=['GET'])
 def home():
     """Health check endpoint."""
@@ -1190,7 +1194,7 @@ def load_sensor_data(storage_type=None):
             else:
                 return sensor_data
         
-        # If no files found, return defaults
+        # If no files found, return default values
         if storage_type:
             return get_default_sensor_data(storage_type)
         else:
