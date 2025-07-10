@@ -360,7 +360,7 @@ test_*.py
 temp_*
 
 # Config files with sensitive data
-config.json
+# config.json
 secrets.json
 .secrets
 

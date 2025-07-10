@@ -1,0 +1,10 @@
+{
+  "environmentVariables": {
+    "development": {
+      "REACT_APP_USE_MOCK_DATA": "true"
+    },
+    "production": {
+      "REACT_APP_USE_MOCK_DATA": "false"
+    }
+  }
+}
