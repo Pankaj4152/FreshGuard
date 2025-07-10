@@ -12,6 +12,7 @@ import Alerts from './pages/Alerts';
 import TestAPI from './pages/TestAPI';
 import TestDashboard from './pages/TestDashboard';
 import RedeemPoints from './pages/RedeemPoints';
+import SignIn from './pages/SignIn';
 import { CartProvider } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
 import './App.css';
@@ -126,6 +127,7 @@ function App() {
                 <Route path="/test-api" element={<TestAPI backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-dashboard" element={<TestDashboard />} />
                 <Route path="/redeem-points" element={<RedeemPoints />} />
+                <Route path="/signin" element={<SignIn />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

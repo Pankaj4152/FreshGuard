@@ -28,6 +28,7 @@ const Header = () => {
     { name: 'Alerts', href: '/alerts', icon: AlertCircle, badge: criticalAlerts.length },
     { name: 'Dashboard', href: '/dashboard', icon: Award },
     { name: 'Redeem Points', href: '/redeem-points', icon: Gift },
+    { name: 'Sign In', href: '/signin', icon: User },
   ];
 
   const isActiveLink = (href) => {

@@ -8,6 +8,7 @@ loyalty = Blueprint('loyalty', __name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOYALTY_FILE = os.path.join(BASE_DIR, "mock_api", "users_loyalty.json")
 REDEEMABLE_ITEMS_FILE = os.path.join(BASE_DIR, "mock_api", "redeemable_items.json")
+REDEEMABLE_PRODUCTS_FILE = os.path.join(BASE_DIR, "mock_api", "redeemable_products.json")
 
 def load_loyalty_data():
     try:
@@ -27,6 +28,13 @@ def load_redeemable_items():
     except (FileNotFoundError, json.JSONDecodeError):
         return {"items": []}
 
+def load_redeemable_products():
+    try:
+        with open(REDEEMABLE_PRODUCTS_FILE, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"products": []}
+
 @loyalty.route('/api/loyalty/points/<user_id>', methods=['GET'])
 def get_loyalty_points(user_id):
     loyalty_data = load_loyalty_data()
@@ -41,6 +49,11 @@ def get_loyalty_points(user_id):
 def get_redeemable_items():
     items = load_redeemable_items()
     return jsonify(items)
+
+@loyalty.route('/api/loyalty/redeemable-products', methods=['GET'])
+def get_redeemable_products():
+    products = load_redeemable_products()
+    return jsonify(products)
 
 @loyalty.route('/api/loyalty/redeem', methods=['POST'])
 def redeem_points():

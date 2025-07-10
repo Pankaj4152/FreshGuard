@@ -1,7 +1,7 @@
 {
   "user1": {
-    "total_price": 33.4,
-    "total_price_after_discount": 33.4,
+    "total_price": 36.39,
+    "total_price_after_discount": 36.39,
     "food_saved": 0,
     "co2_reduced": 0,
     "ITEM0007": {
@@ -12,7 +12,7 @@
     },
     "ITEM0003": {
       "item_name": "Yogurt",
-      "quantity": 6,
+      "quantity": 7,
       "price_per_unit": 2.99,
       "added_at": "2025-07-09T22:12:55.396843"
     },
