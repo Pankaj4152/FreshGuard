@@ -177,13 +177,18 @@ def add_item_with_replacement(user_id, item_query, quantity):
                 "error": "Cart management functions not available"
             }
         
-        # Add item to cart
+        # Add item to cart at FULL PRICE (no discount initially)
+        # Discounts should only be applied when user chooses a replacement
         result = add_item_to_cart(
             user_id=user_id,
             item_id=item['item_id'],
             item_name=item['item_name'],
             quantity=quantity,
-            price_per_unit=item['price_per_unit']
+            price_per_unit=item['price_per_unit'],
+            discount_given=0,  # NO DISCOUNT - user gets full price item
+            category=item.get('category'),
+            expiry_date=item.get('expiry_date'),
+            max_discount=item.get('max_discount', item.get('discount', 0))
         )
         
         if not result.get('success'):
@@ -226,7 +231,6 @@ def add_replacement_item(user_id, original_item_id, replacement_item, quantity):
                 "success": False,
                 "error": "Cart management functions not available"
             }
-        
         # If replacement_item is a dict (full item info), use it directly
         if isinstance(replacement_item, dict):
             item = replacement_item
@@ -238,30 +242,36 @@ def add_replacement_item(user_id, original_item_id, replacement_item, quantity):
                     "success": False,
                     "error": f"Replacement item '{replacement_item}' not found"
                 }
-        
         # Remove the original item from the cart
         if original_item_id:
             remove_item_from_cart(user_id, original_item_id, quantity=None)  # Remove all quantity of original
-
-        # Calculate discount for the replacement item
+        # Calculate discount for the replacement item using max_discount from inventory
         discount = 0
+        max_discount = 0
+        
         if 'expiry_date' in item:
-            discount = calculate_discount(item['expiry_date'])
-
+            # Robustly get max_discount, fallback to 0 if not present
+            max_discount = item.get('max_discount', item.get('discount', 0))
+            try:
+                max_discount = float(max_discount)
+            except Exception:
+                max_discount = 0
+            discount = calculate_discount(item['expiry_date'], max_discount)
+        
         result = add_item_to_cart(
             user_id=user_id,
             item_id=item['item_id'],
             item_name=item['item_name'],
             quantity=quantity,
             price_per_unit=item['price_per_unit'],
-            discount_given=discount
+            discount_given=discount,
+            category=item.get('category'),
+            expiry_date=item.get('expiry_date'),
+            max_discount=max_discount
         )
-        
         if result.get('success'):
             result['message'] = "Replacement item added to cart successfully"
-        
         return result
-        
     except Exception as e:
         return {
             "success": False,
@@ -275,7 +285,8 @@ def calculate_discount(expiry_date, max_discount=50):
         expiry_dt = datetime.strptime(expiry_date, "%Y-%m-%d")
         today = datetime.today()
         days_left = (expiry_dt - today).days
-        
+        if not max_discount or max_discount == 0:
+            return 0
         if days_left <= 0:
             return max_discount  # Max discount for expired items
         elif days_left <= 2:
@@ -284,7 +295,8 @@ def calculate_discount(expiry_date, max_discount=50):
             return max_discount * 0.5  # 50% of max discount
         else:
             return 0  # No discount for fresh items
-    except:
+    except Exception as e:
+        print(f"Error in calculate_discount: {e}")
         return 0
 
 def calculate_loyalty_points(cart):

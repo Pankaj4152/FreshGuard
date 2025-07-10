@@ -62,25 +62,11 @@ export const CartProvider = ({ children }) => {
         await loadCart();
         return response;
       } else {
-        // Handle replacement offers and smart suggestions
-        if (response.replacement || response.hasReplacements) {
-          return {
-            success: false,
-            message: response.message,
-            replacement: response.replacement,
-            replacements: response.replacements,
-            hasReplacements: response.hasReplacements,
-            warning: response.warning,
-            incentive: response.incentive,
-            original: response.original
-          };
-        }
         setError(response.message || 'Failed to add item to cart');
         return response;
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-
       setError(error.message);
       return { success: false, error: error.message };
     } finally {
@@ -88,12 +74,12 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const addReplacementToCart = async (userId, replacement, quantity) => {
+  const addReplacementToCart = async (userId, originalItemId, replacement, quantity) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await apiService.addReplacementToCart(userId, replacement, quantity);
+      const response = await apiService.addReplacementToCart(userId, originalItemId, replacement, quantity);
       
       if (response.success) {
         await loadCart();
@@ -239,22 +225,37 @@ export const CartProvider = ({ children }) => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const getCartSummary = () => {
-    const originalTotal = getCartOriginalTotal();
-    const discountedTotal = getCartTotal();
-    const totalDiscount = originalTotal - discountedTotal;
-    const itemCount = getCartItemCount();
-    
-    return {
-      totalItems: itemCount,
-      totalOriginalPrice: originalTotal,
-      totalDiscountedPrice: discountedTotal,
-      totalDiscount: totalDiscount,
-      loyaltyPointsEarned: itemCount, // 1 point per item
-      estimatedTax: discountedTotal * 0.08,
-      finalTotal: discountedTotal + (discountedTotal * 0.08)
-    };
-  };
+  const getCartSummary = useCallback(() => {
+    if (!Array.isArray(cart) || cart.length === 0) {
+        return {
+            totalItems: 0,
+            totalOriginalPrice: 0,
+            totalDiscountedPrice: 0,
+            totalDiscount: 0,
+            loyaltyPointsEarned: 0,
+            estimatedTax: 0,
+            finalTotal: 0
+        };
+    }
+    const summary = cart.reduce((acc, item) => {
+        const quantity = item.quantity || 0;
+        const originalPrice = item.price_per_unit || 0;
+        const discountedPrice = (typeof item.discounted_price === 'number') ? item.discounted_price : originalPrice;
+        acc.totalItems += quantity;
+        acc.totalOriginalPrice += quantity * originalPrice;
+        acc.totalDiscountedPrice += quantity * discountedPrice;
+        return acc;
+    }, {
+        totalItems: 0,
+        totalOriginalPrice: 0,
+        totalDiscountedPrice: 0
+    });
+    summary.totalDiscount = summary.totalOriginalPrice - summary.totalDiscountedPrice;
+    summary.loyaltyPointsEarned = Math.floor(summary.totalDiscountedPrice / 10); // Example: 1 point per $10
+    summary.estimatedTax = summary.totalDiscountedPrice * 0.08; // 8% tax
+    summary.finalTotal = summary.totalDiscountedPrice + summary.estimatedTax;
+    return summary;
+}, [cart]);
   
   const calculateCartSummary = () => {
     return getCartSummary();

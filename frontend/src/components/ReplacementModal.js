@@ -43,7 +43,14 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
           {replacement.incentive && (
             <div className="alert alert-success mb-4">
               <Package2 size={16} className="mr-2" />
-              <strong>{replacement.incentive}</strong>
+              <strong>
+                {typeof replacement.incentive === 'string' 
+                  ? replacement.incentive 
+                  : replacement.incentive.discount || replacement.incentive.extra_points
+                    ? `Save ${Math.round((replacement.incentive.discount || 0) * 100)}% + earn ${replacement.incentive.extra_points || 0} bonus points!`
+                    : 'Special incentive available!'
+                }
+              </strong>
             </div>
           )}
           

@@ -430,14 +430,26 @@ def api_get_cart():
             return jsonify({"success": False, "error": "user_id is required"}), 400
         
         cart_summary = get_cart_summary(user_id)
-        
-        # Ensure compatibility with frontend expectations
+        # Ensure all items have price_per_unit, discounted_price, and discount_given
+        for item in cart_summary["cart"]:
+            if "discounted_price" not in item:
+                item["discounted_price"] = item.get("price_per_unit", 0)
+            if "discount_given" not in item:
+                # Calculate discount percentage from prices
+                original_price = item.get("price_per_unit", 0)
+                discounted_price = item.get("discounted_price", original_price)
+                if original_price > 0 and discounted_price < original_price:
+                    discount_percent = round(((original_price - discounted_price) / original_price) * 100, 1)
+                    item["discount_given"] = discount_percent
+                else:
+                    item["discount_given"] = 0
         return jsonify({
             "success": True,
             "user_id": user_id,
             "cart": cart_summary["cart"],
-            "items": cart_summary["cart"],  # Frontend expects 'items' field
+            "items": cart_summary["cart"],
             "total": cart_summary["total"],
+            "total_after_discount": cart_summary.get("total_after_discount", cart_summary["total"]),
             "count": len(cart_summary["cart"])
         })
     except Exception as e:

@@ -302,7 +302,11 @@ class ApiService {
 
   async getDiscountedItems() {
     const inventory = await this.getInventory();
-    return inventory.inventory?.filter(item => item.discount > 0) || [];
+    return inventory.inventory?.filter(item => 
+      (item.effective_discount && item.effective_discount > 0) || 
+      (item.max_discount && item.max_discount > 0) ||
+      (item.discount && item.discount > 0)
+    ) || [];
   }
 
   async getCartValue(userId) {
@@ -337,47 +341,14 @@ class ApiService {
   // Smart cart operations with suggestions
   async addToCartWithSuggestions(userId, itemQuery, quantity) {
     try {
-      // First try to get smart suggestions for the item
-      const suggestion = await this.suggestCartItem(itemQuery);
+      // The /add_to_cart endpoint already provides smart suggestions and replacements
+      // No need for separate suggestion call - just use the main endpoint
+      const result = await this.addToCart(userId, itemQuery, quantity);
       
-      if (suggestion.success && suggestion.best_item) {
-        // Add the suggested best item to cart (ONLY CALL)
-        const addResult = await this.addToCart(userId, itemQuery, quantity);
-        
-        if (addResult.success) {
-          return {
-            ...addResult,
-            best_item: suggestion.best_item,
-            warning: suggestion.warning,
-            incentive: suggestion.incentive,
-            replacements: suggestion.replacements || [],
-            hasReplacements: suggestion.replacement_count > 0,
-            smartSuggestionUsed: true
-          };
-        }
-        
-        // If adding failed but we have replacements, return them
-        if (suggestion.replacements && suggestion.replacements.length > 0) {
-          return {
-            success: false,
-            message: addResult.message || 'Item not available, but alternatives found',
-            replacement: suggestion.replacements[0],
-            replacements: suggestion.replacements,
-            hasReplacements: true,
-            warning: suggestion.warning,
-            incentive: suggestion.incentive,
-            original: { item_name: itemQuery }
-          };
-        }
-        
-        return addResult;
-      } else {
-        // If suggestion service fails, make a single direct call
-        return await this.addToCart(userId, itemQuery, quantity);
-      }
+      // The backend already includes replacements and suggestions in the response
+      return result;
     } catch (error) {
       console.error('Error in addToCartWithSuggestions:', error);
-      // Don't make another API call - just return error
       return { 
         success: false, 
         error: 'Failed to add item to cart',

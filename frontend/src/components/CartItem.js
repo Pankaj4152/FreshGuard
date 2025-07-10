@@ -91,15 +91,21 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
 
   const expiryStatus = apiService.getExpiryStatus ? apiService.getExpiryStatus(item.expiry_date) : { status: 'unknown', text: 'Unknown', class: 'text-gray-500' };
   
-  // Calculate discount percentage locally to ensure it works
-  const calculateDiscountPercent = () => {
+  // Use backend-calculated discount if available, otherwise calculate locally
+  const getDiscountPercent = () => {
+    // First try to use the discount_given from backend
+    if (item.discount_given && item.discount_given > 0) {
+      return Math.round(item.discount_given);
+    }
+    
+    // Fallback to local calculation
     if (!item.discounted_price || !item.price_per_unit || item.discounted_price >= item.price_per_unit) {
       return 0;
     }
     return Math.round(((item.price_per_unit - item.discounted_price) / item.price_per_unit) * 100);
   };
   
-  const discountPercent = calculateDiscountPercent();
+  const discountPercent = getDiscountPercent();
   // Force discounts to be shown for specific items if needed (for debugging)
   // const hasDiscount = true;
   const hasDiscount = discountPercent > 0;
@@ -111,7 +117,6 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
           {getProductIcon(item.category)}
         </span>
       </div>
-      
       <div className="cart-item-info">
         <h4 className="cart-item-name">{item.name || item.item_name || 'Product'}</h4>
         <div className="cart-item-details">
@@ -129,7 +134,6 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
           </span>
         </div>
       </div>
-      
       <div className="quantity-controls">
         <button
           className="quantity-btn"
@@ -147,7 +151,6 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
           <Plus size={16} />
         </button>
       </div>
-      
       <div className="cart-item-price">
         <div className="price-details">
           {/* Per Unit Pricing */}
@@ -175,7 +178,6 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
               </div>
             )}
           </div>
-          
           {/* Total Line Price */}
           <div className="total-price">
             {hasDiscount ? (
@@ -198,7 +200,6 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
           </div>
         </div>
       </div>
-      
       <div className="cart-item-actions">
         <button
           className="btn btn-sm btn-danger"
@@ -208,7 +209,6 @@ const CartItem = ({ item, onUpdate, onRemove, loading = false }) => {
         >
           <Trash2 size={16} />
         </button>
-        
         <button
           className="btn btn-sm btn-outline-secondary save-for-later-btn"
           onClick={handleSaveForLater}

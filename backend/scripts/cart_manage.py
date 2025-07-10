@@ -1,6 +1,6 @@
-import json
-import os
 from datetime import datetime
+import os
+import json
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CART_FILE = os.path.join(BASE_DIR, "mock_api", "users_cart.json")
@@ -14,8 +14,9 @@ def update_cart_summary(user_id, cart_data):
         # Exclude summary fields from item iteration
         items = {k: v for k, v in user_cart.items() if not k.startswith('total_') and k not in ['food_saved', 'co2_reduced']}
         total_price = sum(item.get('quantity', 0) * item.get('price_per_unit', 0) for item in items.values())
+        total_price_after_discount = sum(item.get('quantity', 0) * item.get('discounted_price', item.get('price_per_unit', 0)) for item in items.values())
         cart_data[user_id]['total_price'] = round(total_price, 3)
-        cart_data[user_id]['total_price_after_discount'] = round(total_price, 3)
+        cart_data[user_id]['total_price_after_discount'] = round(total_price_after_discount, 3)
         cart_data[user_id]['food_saved'] = 0
         cart_data[user_id]['co2_reduced'] = 0
     except Exception as e:
@@ -46,7 +47,7 @@ def save_cart_data(cart_data, file_path=CART_FILE):
         print(f"Error saving cart data: {e}")
         raise
 
-def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit, discount_given=0):
+def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit, discount_given=0, category=None, expiry_date=None, max_discount=None):
     """Add or update an item in a user's cart."""
     try:
         cart_data = load_cart_data()
@@ -58,6 +59,13 @@ def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit, disc
             cart_data[user_id][item_id]['discounted_price'] = round(
                 cart_data[user_id][item_id]['price_per_unit'] * (1 - discount_given / 100), 2
             )
+            # Update additional fields if provided
+            if category:
+                cart_data[user_id][item_id]['category'] = category
+            if expiry_date:
+                cart_data[user_id][item_id]['expiry_date'] = expiry_date
+            if max_discount is not None:
+                cart_data[user_id][item_id]['max_discount'] = max_discount
         else:
             cart_data[user_id][item_id] = {
                 'item_name': item_name,
@@ -65,7 +73,10 @@ def add_item_to_cart(user_id, item_id, item_name, quantity, price_per_unit, disc
                 'price_per_unit': price_per_unit,
                 'added_at': datetime.now().isoformat(),
                 'discount_given': discount_given,
-                'discounted_price': round(price_per_unit * (1 - discount_given / 100), 2)
+                'discounted_price': round(price_per_unit * (1 - discount_given / 100), 2),
+                'category': category,
+                'expiry_date': expiry_date,
+                'max_discount': max_discount
             }
         update_cart_summary(user_id, cart_data)
         save_cart_data(cart_data)
@@ -155,20 +166,31 @@ def get_cart_summary(user_id):
     try:
         cart_data = load_cart_data()
         user_cart = cart_data.get(user_id, {})
-        items = [
-            {
-                "item_id": item_id,
-                "item_name": item['item_name'],
-                "quantity": item['quantity'],
-                "price_per_unit": item['price_per_unit'],
-                "added_at": item['added_at'],
-                "subtotal": item['quantity'] * item['price_per_unit'],
-                "discount_given": item.get('discount_given', 0),
-                "discounted_price": item.get('discounted_price', item['price_per_unit'])
-            }
-            for item_id, item in user_cart.items()
-            if not item_id.startswith('total_') and item_id not in ['food_saved', 'co2_reduced']
-        ]
+        items = []
+        for item_id, item in user_cart.items():
+            if not item_id.startswith('total_') and item_id not in ['food_saved', 'co2_reduced']:
+                # Calculate discount_given if missing
+                discount_given = item.get('discount_given', 0)
+                original_price = item.get('price_per_unit', 0)
+                discounted_price = item.get('discounted_price', original_price)
+                
+                if discount_given == 0 and original_price > 0 and discounted_price < original_price:
+                    discount_given = round(((original_price - discounted_price) / original_price) * 100, 1)
+                
+                items.append({
+                    "item_id": item_id,
+                    "item_name": item['item_name'],
+                    "quantity": item['quantity'],
+                    "price_per_unit": original_price,
+                    "added_at": item['added_at'],
+                    "subtotal": item['quantity'] * discounted_price,  # Use discounted price for subtotal
+                    "discount_given": discount_given,
+                    "discounted_price": discounted_price,
+                    # Include additional fields if available
+                    "max_discount": item.get('max_discount', None),
+                    "category": item.get('category', None),
+                    "expiry_date": item.get('expiry_date', None)
+                })
         summary = {
             "cart": items,
             "total": user_cart.get('total_price', 0),
@@ -445,7 +467,7 @@ def find_best_item_for_cart(product_name, inventory_items, today=None, threshold
         # No eligible, pick freshest anyway, but warn and apply incentive
         best = max(items_with_days, key=lambda t: t[1])
         warning = f"Only near-expiry items available (expires in {best[1]} days)."
-        incentive = {"discount": 0.2, "extra_points": 10}  # Example
+        incentive = f"Save 20% + earn 10 bonus points with near-expiry items!"
         return best[0], warning, incentive
 
 def find_near_expiry_replacements(product_name, inventory_items, today=None, thresholds=None):

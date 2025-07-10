@@ -73,7 +73,7 @@ def find_best_item_for_cart(product_name, today=None):
         # No eligible, pick freshest anyway, but warn and apply incentive
         best = max(items_with_days, key=lambda t: t[1])
         warning = f"Only near-expiry items available (expires in {best[1]} days)."
-        incentive = {"discount": 0.2, "extra_points": 10}  # Example
+        incentive = f"Save 20% + earn 10 bonus points with near-expiry items!"
         return {"best_item": best[0], "warning": warning, "incentive": incentive}
 
 def find_near_expiry_replacements(product_name, today=None):

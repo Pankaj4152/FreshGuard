@@ -13,7 +13,7 @@ export const useUser = () => {
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState({
-    id: 'user1', // Default user for demo
+    id: 'test_user', // Use test_user to show discount functionality
     name: 'Sarah Johnson',
     email: 'sarah.johnson@example.com',
     loyaltyPoints: 0,
