@@ -115,7 +115,7 @@ const RedeemPoints = () => {
       {/* Redeemable Products Section */}
       <h3 className="redeem-items-title">Redeem Points for Products</h3>
       {error && (
-        <div className="redeem-error bg-red-500 border border-red-400 text-red-700 rounded">
+        <div className="redeem-error bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
         </div>
       )}

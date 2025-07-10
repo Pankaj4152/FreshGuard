@@ -1,0 +1,9 @@
+{
+  "admins": [
+    {
+      "username": "admin",
+      "password_hash": "admin123",
+      "permissions": ["all"]
+    }
+  ]
+}

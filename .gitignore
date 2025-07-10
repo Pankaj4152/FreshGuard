@@ -259,7 +259,7 @@ dmypy.json
 
 # Dataset files
 datasets/
-data/
+# data/
 *.tfrecord
 
 # Jupyter notebook checkpoints

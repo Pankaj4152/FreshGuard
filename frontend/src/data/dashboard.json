@@ -1,0 +1,7 @@
+{
+  "dashboard": {
+    "users": 10,
+    "orders": 25,
+    "revenue": 1000
+  }
+}
