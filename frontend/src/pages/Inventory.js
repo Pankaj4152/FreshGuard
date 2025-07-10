@@ -16,7 +16,7 @@ import {
 
 const Inventory = ({ backendStatus, addToast }) => {
   const { user } = useUser();
-  const { addToCart, addReplacementToCart } = useCart();
+  const { addToCart, addReplacementToCart, loadCart } = useCart();
   
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -258,19 +258,38 @@ const Inventory = ({ backendStatus, addToast }) => {
         
         showSuccess(successMessage);
         
+        // Reload cart to get the actual added item
+        await loadCart();
+        
         // Handle replacement suggestions - check multiple possible formats
-        const hasReplacements = result.hasReplacements || result.replacement;
+        const hasReplacements = result.hasReplacements || result.replacement || (result.replacements && result.replacements.length > 0);
         const replacements = result.replacements || (result.replacement ? [result.replacement] : []);
         
         console.log('Replacement check:', { hasReplacements, replacementsCount: replacements.length });
         
         if (hasReplacements && replacements.length > 0) {
           console.log('Opening replacement modal with:', replacements[0]);
+          
+          // Get the actual cart items to find the one that was just added
+          const cartResponse = await apiService.getCart(userId);
+          let addedCartItem = product; // fallback to original product
+          
+          if (cartResponse.success && cartResponse.cart) {
+            // Find the cart item that matches the product we just added
+            const matchingCartItem = cartResponse.cart.find(item => 
+              item.item_name === productName || item.item_id === product.item_id
+            );
+            if (matchingCartItem) {
+              addedCartItem = matchingCartItem;
+              console.log('Found matching cart item:', addedCartItem);
+            }
+          }
+          
           setReplacementModal({
             isOpen: true,
             replacement: {
               ...replacements[0], // Show first replacement
-              original: product,
+              original: addedCartItem, // Use the actual cart item, not the inventory item
               alternatives: replacements,
               warning: result.warning,
               incentive: result.incentive
@@ -306,13 +325,23 @@ const Inventory = ({ backendStatus, addToast }) => {
   };
 
   const handleReplacementAccept = async (replacement) => {
+    console.log('🔄 ACCEPT DISCOUNTED ITEM:', replacement);
     try {
-      const result = await addReplacementToCart('user1', replacement, 1);
+      const originalItemId = replacement.original?.item_id;
+      const userId = user?.id || 'test_user';
+      
+      console.log('Using userId:', userId, 'originalItemId:', originalItemId);
+      
+      const result = await addReplacementToCart(userId, originalItemId, replacement, 1);
       
       if (result.success) {
         const replacementName = replacement.item_name || replacement.name || 'Replacement';
-        showSuccess(`Replaced with ${replacementName}! +10 loyalty points earned!`);
+        const discount = replacement.discount_given || replacement.effective_discount || 0;
+        showSuccess(`✅ Added discounted ${replacementName}! ${discount}% off + bonus points!`);
+        // Reload cart to reflect the replacement
+        await loadCart();
       } else {
+        console.error('Replacement failed:', result);
         showError(result.message || 'Failed to add replacement');
       }
     } catch (error) {
@@ -323,7 +352,20 @@ const Inventory = ({ backendStatus, addToast }) => {
     setReplacementModal({ isOpen: false, replacement: null });
   };
 
-  const handleReplacementDecline = () => {
+  const handleReplacementDecline = async () => {
+    console.log('🍃 KEEP FRESH ITEM - User chose to keep the original item');
+    
+    // The original item is ALREADY in the cart at full price (added by handleAddToCart)
+    // We just need to close the modal and confirm the choice
+    const replacement = replacementModal.replacement;
+    const originalItem = replacement?.original;
+    
+    if (originalItem) {
+      showSuccess(`✅ Keeping fresh ${originalItem.item_name || originalItem.name} at regular price!`);
+      // Reload cart to ensure UI is updated
+      await loadCart();
+    }
+    
     setReplacementModal({ isOpen: false, replacement: null });
   };
 

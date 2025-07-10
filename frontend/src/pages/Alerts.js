@@ -161,10 +161,10 @@ const Alerts = () => {
   if (loading) {
     return (
       <div className="container py-8">
-        <div className="text-center">
+        {/* <div className="text-center">
           <div className="spinner spinner-primary mb-4"></div>
           <p>Loading alerts...</p>
-        </div>
+        </div> */}
       </div>
     );
   }
@@ -175,7 +175,7 @@ const Alerts = () => {
       
       {/* Header */}
       <div className="alerts-header">
-        <div className="alerts-title">
+        {/* <div className="alerts-title">
           <h1 className="page-title">
             <Bell className="mr-3" size={32} />
             Alerts & Notifications
@@ -183,9 +183,9 @@ const Alerts = () => {
           <p className="page-description">
             Stay informed about expiring items and special offers
           </p>
-        </div>
+        </div> */}
         
-        <div className="alerts-actions">
+        {/* <div className="alerts-actions">
           <button 
             onClick={toggleAlerts}
             className={`btn ${alertSettings.enabled ? 'btn-outline-danger' : 'btn-outline-success'}`}
@@ -204,11 +204,11 @@ const Alerts = () => {
             <RefreshCw size={18} />
             <span className="ml-2">Refresh</span>
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Filter Tabs */}
-      <div className="filter-tabs">
+      {/* <div className="filter-tabs">
         <button 
           onClick={() => setFilter('all')}
           className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
@@ -236,10 +236,10 @@ const Alerts = () => {
              expiringItems.filter(i => getExpiryStatus(i.expiry_date).status === 'warning').length}
           </span>
         </button>
-      </div>
+      </div> */}
 
       {/* Active Alerts */}
-      {filteredAlerts.length > 0 && (
+      {/* {filteredAlerts.length > 0 && (
         <div className="alerts-section">
           <h2 className="section-title">
             <AlertTriangle className="mr-2" size={24} />
@@ -277,10 +277,10 @@ const Alerts = () => {
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Expiring Items */}
-      {filteredExpiringItems.length > 0 && (
+      {/* {filteredExpiringItems.length > 0 && (
         <div className="expiring-items-section">
           <h2 className="section-title">
             <Clock className="mr-2" size={24} />
@@ -306,10 +306,10 @@ const Alerts = () => {
             })}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Empty State */}
-      {filteredAlerts.length === 0 && filteredExpiringItems.length === 0 && (
+      {/* {filteredAlerts.length === 0 && filteredExpiringItems.length === 0 && (
         <div className="empty-alerts">
           <div className="empty-icon">
             {alertSettings.enabled ? <Bell size={64} /> : <BellOff size={64} />}
@@ -337,10 +337,10 @@ const Alerts = () => {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Alert Settings */}
-      <div className="alert-settings">
+      {/* <div className="alert-settings">
         <div className="card">
           <div className="card-header">
             <h3>Alert Settings</h3>
@@ -375,7 +375,7 @@ const Alerts = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -198,12 +198,35 @@ const Cart = () => {
                 
                 return (
                   <div key={`${item.item_id}-${index}`} className="cart-item-wrapper">
-                    {warning.show && (
-                      <div className={`expiry-warning ${warning.severity}`}>
-                        <AlertCircle size={16} />
-                        <span>{warning.message}</span>
-                      </div>
-                    )}
+                    <div
+                    className="discount-info"
+                    style={{
+                      marginBottom: 8,
+                      display: 'flex',
+                      gap: '24px',
+                      alignItems: 'center',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    <span style={{ color: '#888', display: 'flex', alignItems: 'center' }}>
+                      <strong style={{ minWidth: 110 }}>Original Price:</strong>
+                      <span style={{ textDecoration: 'line-through', marginLeft: 8 }}>
+                        ${item.price_per_unit}
+                      </span>
+                    </span>
+                    <span style={{ color: '#2e7d32', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+                      <strong style={{ minWidth: 70 }}>You Pay:</strong>
+                      <span style={{ marginLeft: 8 }}>
+                        ${item.discounted_price}
+                      </span>
+                    </span>
+                    <span style={{ color: '#d32f2f', display: 'flex', alignItems: 'center' }}>
+                      <strong style={{ minWidth: 70 }}>Discount:</strong>
+                      <span style={{ marginLeft: 8 }}>
+                        {item.discount_given}% off
+                      </span>
+                    </span>
+</div>
                     <CartItem
                       item={item}
                       onUpdate={calculateCartSummary}

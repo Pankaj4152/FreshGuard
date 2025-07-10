@@ -118,18 +118,54 @@ const Home = () => {
   };
 
   const handleReplacementAccept = async (replacement) => {
-    const result = await addReplacementToCart(replacement, 1);
-    
-    if (result.success) {
-      showSuccess(`Replaced with ${replacement.name}! +5 loyalty points earned!`);
-    } else {
-      showError(result.message || 'Failed to add replacement');
+    console.log('🔄 HOME: ACCEPT DISCOUNTED ITEM:', replacement);
+    try {
+      const originalItemId = replacement.original?.item_id;
+      const userId = user?.id || 'test_user';
+      
+      const result = await addReplacementToCart(userId, originalItemId, replacement, 1);
+      
+      if (result.success) {
+        const replacementName = replacement.item_name || replacement.name || 'Replacement';
+        const discount = replacement.discount_given || replacement.effective_discount || 0;
+        showSuccess(`✅ Added discounted ${replacementName}! ${discount}% off + bonus points!`);
+      } else {
+        console.error('Replacement failed:', result);
+        showError(result.message || 'Failed to add replacement');
+      }
+    } catch (error) {
+      console.error('Error adding replacement:', error);
+      showError('Failed to add replacement');
     }
     
     setReplacementModal({ isOpen: false, replacement: null });
   };
 
-  const handleReplacementDecline = () => {
+  const handleReplacementDecline = async () => {
+    console.log('🍃 HOME: KEEP FRESH ITEM - Adding original at full price');
+    
+    // Get the original item from the replacement modal
+    const replacement = replacementModal.replacement;
+    if (replacement?.original) {
+      try {
+        const userId = user?.id || 'test_user';
+        const originalItem = replacement.original;
+        
+        // Add the original item at full price (no discount)
+        const result = await addToCart(userId, originalItem.item_name || originalItem.name, 1);
+        
+        if (result.success) {
+          showSuccess(`✅ Added fresh ${originalItem.item_name || originalItem.name} at regular price!`);
+        } else {
+          console.error('Failed to add original item:', result);
+          showError(result.message || 'Failed to add item');
+        }
+      } catch (error) {
+        console.error('Error adding original item:', error);
+        showError('Failed to add item');
+      }
+    }
+    
     setReplacementModal({ isOpen: false, replacement: null });
   };
 
@@ -302,10 +338,10 @@ const Home = () => {
             Every purchase makes a difference. Help us reduce food waste and build a better future.
           </p>
           <div className="flex justify-center gap-4">
-            <Link to="/alerts" className="btn btn-secondary">
+            {/* <Link to="/alerts" className="btn btn-secondary">
               <AlertTriangle size={20} />
               View Alerts
-            </Link>
+            </Link> */}
             <Link to="/dashboard" className="btn btn-outline" style={{ color: 'white', borderColor: 'white' }}>
               <Users size={20} />
               Track Impact
