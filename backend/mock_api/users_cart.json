@@ -1,13 +1,41 @@
 {
   "user1": {
+<<<<<<< HEAD
+    "total_price": 36.39,
+    "total_price_after_discount": 36.39,
+    "food_saved": 0,
+    "co2_reduced": 0,
+    "ITEM0007": {
+      "item_name": "Juice",
+      "quantity": 2,
+      "price_per_unit": 3.49,
+      "added_at": "2025-07-09T22:12:39.673219"
+    },
+    "ITEM0003": {
+      "item_name": "Yogurt",
+      "quantity": 7,
+      "price_per_unit": 2.99,
+      "added_at": "2025-07-09T22:12:55.396843"
+    },
+=======
     "total_price": 19.4,
     "total_price_after_discount": 17.75,
     "food_saved": 0,
     "co2_reduced": 0,
+>>>>>>> 609581e90bc2731be806bf268fb89c8ce39fcb87
     "ITEM0021": {
       "item_name": "Bagel",
       "quantity": 1,
       "price_per_unit": 3.49,
+<<<<<<< HEAD
+      "added_at": "2025-07-09T22:13:56.705087"
+    },
+    "ITEM0023": {
+      "item_name": "Muffin",
+      "quantity": 1,
+      "price_per_unit": 4.99,
+      "added_at": "2025-07-09T22:14:00.774259"
+=======
       "added_at": "2025-07-09T19:54:13.291581",
       "discount_given": 0,
       "discounted_price": 3.49
@@ -57,6 +85,7 @@
       "category": "Dairy",
       "expiry_date": "2025-07-09",
       "max_discount": 20.0
+>>>>>>> 609581e90bc2731be806bf268fb89c8ce39fcb87
     }
   },
   "test_user": {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiService from '../../services/api';
+import adminApiService from '../services/adminApiService';
 
 const AdminAuthContext = createContext();
 
@@ -25,8 +25,8 @@ export const AdminAuthProvider = ({ children }) => {
         const storedToken = localStorage.getItem('adminToken');
         
         if (storedAdmin && storedToken) {
-          // Verify token with backend
-          const response = await apiService.verifyAdminToken(storedToken);
+          // Verify token with admin API service
+          const response = await adminApiService.verifyToken(storedToken);
           
           if (response.success) {
             setAdmin(JSON.parse(storedAdmin));
@@ -55,30 +55,19 @@ export const AdminAuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // In a real application, this would call your API
-      // For this MVP, we'll simulate authentication
-      // const response = await apiService.adminLogin(credentials);
+      // Call admin API service for authentication
+      const response = await adminApiService.login(credentials);
       
-      // Mock admin authentication
-      if (credentials.username === 'admin' && credentials.password === 'walmart123') {
-        const adminData = {
-          id: 'admin-1',
-          name: 'Store Admin',
-          email: 'admin@walmart.com',
-          role: 'store_admin',
-          storeId: 'store-123',
-          storeName: 'Walmart Supercenter #123'
-        };
-        
+      if (response.success) {
         // Store admin data and token in localStorage
-        localStorage.setItem('adminUser', JSON.stringify(adminData));
-        localStorage.setItem('adminToken', 'mock-jwt-token-for-admin');
+        localStorage.setItem('adminUser', JSON.stringify(response.admin));
+        localStorage.setItem('adminToken', response.token);
         
-        setAdmin(adminData);
+        setAdmin(response.admin);
         return { success: true };
       } else {
-        setError('Invalid credentials');
-        return { success: false, error: 'Invalid credentials' };
+        setError(response.error || 'Invalid credentials');
+        return { success: false, error: response.error || 'Invalid credentials' };
       }
     } catch (err) {
       setError(err.message || 'Login failed');

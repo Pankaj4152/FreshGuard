@@ -25,7 +25,7 @@ import {
   Filler
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import apiService from '../../services/api';
+import adminApiService from '../services/adminApiService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -69,14 +69,17 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // In a real app, this would fetch from your API
-      // For now, we'll simulate data loading
       try {
-        // const response = await apiService.getAdminDashboard();
-        // setDashboardData(response.data);
-        setLoading(false);
+        const response = await adminApiService.getDashboardData();
+        
+        if (response.success) {
+          setDashboardData(response.data);
+        } else {
+          console.error('Failed to fetch dashboard data:', response.error);
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -84,13 +87,13 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Sales data for chart
+  // Sales data for chart - Use data from the state or fallback to defaults
   const salesData = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
         label: 'Sales',
-        data: [1823, 2150, 1975, 2100, 2540, 2780, 2450],
+        data: dashboardData?.sales?.daily || [1823, 2150, 1975, 2100, 2540, 2780, 2450],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1
@@ -103,7 +106,9 @@ const AdminDashboard = () => {
     labels: ['Produce', 'Dairy', 'Meat', 'Bakery', 'Frozen', 'Pantry'],
     datasets: [
       {
-        data: [35, 25, 15, 10, 10, 5],
+        data: dashboardData?.inventory?.categories ? 
+          Object.values(dashboardData.inventory.categories) : 
+          [35, 25, 15, 10, 10, 5],
         backgroundColor: [
           'rgba(255, 99, 132, 0.7)',
           'rgba(54, 162, 235, 0.7)',
@@ -123,7 +128,9 @@ const AdminDashboard = () => {
     datasets: [
       {
         label: 'Expiring Items',
-        data: [12, 18, 22, 35, 45, 38, 25, 18],
+        data: dashboardData?.inventory?.expiry ? 
+          Object.values(dashboardData.inventory.expiry) : 
+          [12, 18, 22, 35, 45, 38, 25, 18],
         borderColor: 'rgba(255, 99, 132, 1)',
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         fill: true,

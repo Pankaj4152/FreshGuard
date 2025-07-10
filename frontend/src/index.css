@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Walmart-inspired CSS Reset and Theme */
 * {
   margin: 0;

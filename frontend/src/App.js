@@ -11,6 +11,8 @@ import Dashboard from './pages/Dashboard';
 import Alerts from './pages/Alerts';
 import TestAPI from './pages/TestAPI';
 import TestDashboard from './pages/TestDashboard';
+import RedeemPoints from './pages/RedeemPoints';
+import SignIn from './pages/SignIn';
 import { CartProvider } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
 // Admin imports
@@ -22,6 +24,7 @@ import ProtectedAdminRoute from './admin/components/ProtectedAdminRoute';
 import './App.css';
 import './styles/cart-discounts.css';
 import './styles/dashboard-enhanced.css';
+import './styles/redeem-points.css';
 import './styles/admin-link.css';
 import './admin/admin-styles.css';
 import apiService from './services/api';
@@ -131,6 +134,8 @@ function App() {
                 <Route path="/alerts" element={<Alerts backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-api" element={<TestAPI backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-dashboard" element={<TestDashboard />} />
+                <Route path="/redeem-points" element={<RedeemPoints />} />
+                <Route path="/signin" element={<SignIn />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminRoot><Navigate to="/admin/login" /></AdminRoot>} />

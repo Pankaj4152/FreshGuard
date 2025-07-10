@@ -1,0 +1,32 @@
+{
+  "products": [
+    {
+      "id": "banana",
+      "name": "Banana",
+      "description": "Fresh bananas (1 dozen)",
+      "pointsCost": 1000,
+      "image": "banana.png"
+    },
+    {
+      "id": "apple",
+      "name": "Apple",
+      "description": "Crisp apples (1 kg)",
+      "pointsCost": 1200,
+      "image": "apple.png"
+    },
+    {
+      "id": "bread",
+      "name": "Bread",
+      "description": "Whole wheat bread (1 loaf)",
+      "pointsCost": 900,
+      "image": "bread.png"
+    },
+    {
+      "id": "milk",
+      "name": "Milk",
+      "description": "Fresh milk (1 litre)",
+      "pointsCost": 1100,
+      "image": "milk.png"
+    }
+  ]
+}

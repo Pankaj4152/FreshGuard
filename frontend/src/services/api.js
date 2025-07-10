@@ -368,6 +368,22 @@ class ApiService {
     });
   }
 
+  // Loyalty Points API Methods
+  async getRedeemableItems() {
+    return await this.request('/api/loyalty/redeemable-items');
+  }
+
+  async redeemPoints(userId, itemId, pointsCost) {
+    return await this.request('/api/loyalty/redeem', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        item_id: itemId,
+        points_cost: pointsCost
+      }),
+    });
+  }
+
   // Admin Authentication 
   async verifyAdminToken(token) {
     // This would be implemented with a real backend

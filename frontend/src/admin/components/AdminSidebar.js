@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAdminPermission } from '../utils/permissions';
 import {
   LayoutDashboard,
   Package,
@@ -22,43 +23,58 @@ const AdminSidebar = () => {
     return location.pathname === path;
   };
 
+  const hasDashboardPermission = useAdminPermission('dashboard.view');
+  const hasInventoryPermission = useAdminPermission('inventory.view');
+  const hasPricingPermission = useAdminPermission('pricing.view');
+  const hasUsersPermission = useAdminPermission('users.view');
+  const hasAIFeaturesPermission = useAdminPermission('ai-features.view');
+  const hasReportsPermission = useAdminPermission('reports.view');
+  const hasSettingsPermission = useAdminPermission('settings.view');
+
   const menuItems = [
     {
       name: 'Dashboard',
       icon: LayoutDashboard,
-      path: '/admin/dashboard'
+      path: '/admin/dashboard',
+      permission: hasDashboardPermission
     },
     {
       name: 'Inventory Management',
       icon: Package,
-      path: '/admin/inventory'
+      path: '/admin/inventory',
+      permission: hasInventoryPermission
     },
     {
       name: 'Pricing & Discounts',
       icon: Tags,
-      path: '/admin/pricing'
+      path: '/admin/pricing',
+      permission: hasPricingPermission
     },
     {
       name: 'Users & Orders',
       icon: Users,
-      path: '/admin/users'
+      path: '/admin/users',
+      permission: hasUsersPermission
     },
     {
       name: 'AI Features',
       icon: Brain,
-      path: '/admin/ai-features'
+      path: '/admin/ai-features',
+      permission: hasAIFeaturesPermission
     },
     {
       name: 'Reports',
       icon: PieChart,
-      path: '/admin/reports'
+      path: '/admin/reports',
+      permission: hasReportsPermission
     },
     {
       name: 'Settings',
       icon: Settings,
-      path: '/admin/settings'
+      path: '/admin/settings',
+      permission: hasSettingsPermission
     }
-  ];
+  ].filter(item => item.permission);
 
   return (
     <aside className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}>
