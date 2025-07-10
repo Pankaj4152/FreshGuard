@@ -1,0 +1,31 @@
+.admin-link {
+  margin-left: 12px;
+  font-size: 12px;
+  padding: 2px 8px;
+  background-color: #334155;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.admin-link:hover {
+  background-color: #475569;
+}
+
+.admin-placeholder {
+  padding: 32px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.admin-placeholder h2 {
+  margin-bottom: 16px;
+  color: var(--admin-color-primary);
+}
+
+.admin-placeholder p {
+  color: var(--admin-color-secondary);
+}

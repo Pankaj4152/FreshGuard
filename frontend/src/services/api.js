@@ -368,6 +368,91 @@ class ApiService {
     });
   }
 
+  // Admin Authentication 
+  async verifyAdminToken(token) {
+    // This would be implemented with a real backend
+    // For demo purposes, we'll just return success
+    return { success: true };
+  }
+
+  async adminLogin(credentials) {
+    // In a real implementation this would call the backend
+    // For demo purposes, we'll just simulate a successful login
+    if (credentials.username === 'admin' && credentials.password === 'walmart123') {
+      return {
+        success: true,
+        admin: {
+          id: 'admin-1',
+          name: 'Store Admin',
+          email: 'admin@walmart.com',
+          role: 'store_admin'
+        },
+        token: 'mock-jwt-token-for-admin'
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Invalid credentials'
+      };
+    }
+  }
+
+  // Admin Dashboard
+  async getAdminDashboard() {
+    // This would be implemented with a real backend
+    // For now, we'll return mock data
+    return {
+      success: true,
+      data: {
+        sales: {
+          today: 2450.75,
+          week: 15780.50,
+          month: 64320.25,
+          growth: 12.5
+        },
+        inventory: {
+          totalItems: 1248,
+          lowStock: 42,
+          expiringItems: 87
+        },
+        wasteReduction: {
+          itemsSaved: 324,
+          carbonSaved: 876.4,
+          weightSaved: 1540.6
+        },
+        customers: {
+          activeUsers: 875,
+          cartAbandonment: 23.4,
+          replacementRate: 68.7
+        }
+      }
+    };
+  }
+
+  // Admin Inventory Management
+  async getInventoryStats() {
+    // Mock implementation
+    return {
+      success: true,
+      data: {
+        total: 1248,
+        categories: {
+          produce: 345,
+          dairy: 187,
+          meat: 102,
+          bakery: 95,
+          frozen: 221,
+          pantry: 298
+        },
+        expiringItems: {
+          today: 12,
+          thisWeek: 75,
+          nextWeek: 132
+        }
+      }
+    };
+  }
+
   // Utility methods
   getDaysUntilExpiry(expiryDate) {
     if (!expiryDate) return null;

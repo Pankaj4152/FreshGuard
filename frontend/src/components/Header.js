@@ -80,6 +80,9 @@ const Header = () => {
               <User size={16} />
               <span>{user.name}</span>
               <span className="badge badge-primary">{user.loyaltyPoints} pts</span>
+              
+              {/* Admin Panel Link (visible to all for demo purposes) */}
+              <Link to="/admin/login" className="admin-link">Admin Panel</Link>
             </div>
 
             {/* Cart */}

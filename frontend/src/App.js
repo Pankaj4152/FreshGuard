@@ -13,9 +13,17 @@ import TestAPI from './pages/TestAPI';
 import TestDashboard from './pages/TestDashboard';
 import { CartProvider } from './context/CartContext';
 import { UserProvider } from './context/UserContext';
+// Admin imports
+import AdminRoot from './admin/AdminRoot';
+import AdminLogin from './admin/pages/AdminLogin';
+import AdminDashboard from './admin/pages/AdminDashboard';
+import ProtectedAdminRoute from './admin/components/ProtectedAdminRoute';
+// CSS imports
 import './App.css';
 import './styles/cart-discounts.css';
 import './styles/dashboard-enhanced.css';
+import './styles/admin-link.css';
+import './admin/admin-styles.css';
 import apiService from './services/api';
 
 function App() {
@@ -123,6 +131,20 @@ function App() {
                 <Route path="/alerts" element={<Alerts backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-api" element={<TestAPI backendStatus={backendStatus} addToast={addToast} />} />
                 <Route path="/test-dashboard" element={<TestDashboard />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminRoot><Navigate to="/admin/login" /></AdminRoot>} />
+                <Route path="/admin/login" element={<AdminRoot><AdminLogin /></AdminRoot>} />
+                <Route path="/admin" element={<AdminRoot><ProtectedAdminRoute /></AdminRoot>}>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="inventory" element={<div className="admin-placeholder"><h2>Inventory Management</h2><p>This section is under development</p></div>} />
+                  <Route path="pricing" element={<div className="admin-placeholder"><h2>Pricing & Discounts</h2><p>This section is under development</p></div>} />
+                  <Route path="users" element={<div className="admin-placeholder"><h2>Users & Orders</h2><p>This section is under development</p></div>} />
+                  <Route path="ai-features" element={<div className="admin-placeholder"><h2>AI Features</h2><p>This section is under development</p></div>} />
+                  <Route path="reports" element={<div className="admin-placeholder"><h2>Reports</h2><p>This section is under development</p></div>} />
+                  <Route path="settings" element={<div className="admin-placeholder"><h2>Settings</h2><p>This section is under development</p></div>} />
+                </Route>
+                
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
