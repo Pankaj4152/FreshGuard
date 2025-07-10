@@ -1,6 +1,6 @@
-import adminsData from '../data/admins.json';
-import dashboardData from '../data/dashboard.json';
-import configData from '../data/config.json';
+import adminsData from '../../data/admins.json';
+import dashboardData from '../../data/dashboard.json';
+import configData from '../../data/config.json';
 
 /**
  * Utility class for admin data operations
