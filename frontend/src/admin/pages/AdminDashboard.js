@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAdminAuth } from '../context/AdminAuthContext';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -42,6 +43,8 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
+  // Access the admin auth context to check permissions
+  const { admin } = useAdminAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     sales: {

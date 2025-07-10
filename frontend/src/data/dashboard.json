@@ -1,7 +1,47 @@
 {
   "dashboard": {
-    "users": 10,
-    "orders": 25,
-    "revenue": 1000
+    "users": 875,
+    "orders": 642,
+    "revenue": 64320.25,
+    "sales": {
+      "today": 2450.75,
+      "week": 15780.50,
+      "month": 64320.25,
+      "growth": 12.5,
+      "daily": [1823, 2150, 1975, 2100, 2540, 2780, 2450]
+    },
+    "inventory": {
+      "totalItems": 1248,
+      "lowStock": 42,
+      "expiringItems": 87,
+      "categories": {
+        "Produce": 35,
+        "Dairy": 25,
+        "Meat": 15,
+        "Bakery": 10,
+        "Frozen": 10,
+        "Pantry": 5
+      },
+      "expiry": {
+        "Today": 12,
+        "1 Day": 18,
+        "2 Days": 22,
+        "3 Days": 35,
+        "4 Days": 45,
+        "5 Days": 38,
+        "6 Days": 25,
+        "7 Days": 18
+      }
+    },
+    "wasteReduction": {
+      "itemsSaved": 324,
+      "carbonSaved": 876.4,
+      "weightSaved": 1540.6
+    },
+    "customers": {
+      "activeUsers": 875,
+      "cartAbandonment": 23.4,
+      "replacementRate": 68.7
+    }
   }
 }

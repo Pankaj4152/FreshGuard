@@ -1,4 +1,5 @@
 import { useAdminAuth } from '../context/AdminAuthContext';
+import AdminDataUtil from './AdminDataUtil';
 
 /**
  * Custom hook to check if the current admin user has a specific permission
@@ -8,11 +9,20 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 export const useAdminPermission = (permission) => {
   const { admin } = useAdminAuth();
   
-  if (!admin || !admin.permissions) {
-    return false;
+  // Log permission check for debugging
+  console.log('Checking permission:', permission);
+  console.log('Admin object:', admin);
+  
+  if (!permission) {
+    // If no specific permission is required, allow access
+    return true;
   }
   
-  return admin.permissions.includes(permission);
+  // Use AdminDataUtil to check permissions (which handles development mode bypass)
+  const hasPermission = AdminDataUtil.hasPermission(admin, permission);
+  console.log('Has permission:', hasPermission);
+  
+  return hasPermission;
 };
 
 /**

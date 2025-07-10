@@ -401,7 +401,16 @@ class ApiService {
           id: 'admin-1',
           name: 'Store Admin',
           email: 'admin@walmart.com',
-          role: 'store_admin'
+          role: 'store_admin',
+          permissions: [
+            "dashboard.view",
+            "inventory.view", "inventory.edit",
+            "pricing.view", "pricing.edit",
+            "users.view", "users.edit",
+            "ai-features.view", "ai-features.edit",
+            "reports.view",
+            "settings.view", "settings.edit"
+          ]
         },
         token: 'mock-jwt-token-for-admin'
       };
