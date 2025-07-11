@@ -336,14 +336,15 @@
 
 .discount-badge {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: 0.25rem;
+  right: 0.75rem;
   background: #ef4444;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: bold;
+  z-index: 2;
 }
 
 .product-info {
@@ -1751,11 +1752,13 @@
 
 .product-badges {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0.002rem;
+  left: 0.005rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: flex-start;
+  /* gap: 0.25rem; */
+  gap: 6px;
   z-index: 2;
 }
 
@@ -1783,7 +1786,7 @@
 
 .sustainability-badge {
   background: linear-gradient(135deg, var(--success) 0%, #51cf66 100%);
-  color: white;
+  color: #399a60;
   padding: 0.25rem 0.5rem;
   border-radius: 1rem;
   font-size: 0.75rem;
@@ -1793,7 +1796,7 @@
   gap: 0.25rem;
 }
 
-.recommended-badge {
+/* .recommended-badge {
   background: linear-gradient(135deg, var(--warning) 0%, #ffd43b 100%);
   color: var(--dark);
   padding: 0.25rem 0.5rem;
@@ -1803,6 +1806,19 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+} */
+
+.recommended-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: #e53935; /* default red for discount/urgency */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  margin: 0;
 }
 
 .btn-loading {
@@ -1939,8 +1955,8 @@
 
 .urgency-badge {
   background: var(--danger);
-  color: white;
-  padding: 0.25rem 0.5rem;
+  color: rgb(145, 30, 30);
+  padding: 0.35rem 0.5rem;
   border-radius: 1rem;
   font-size: 0.7rem;
   font-weight: 600;
@@ -1974,7 +1990,7 @@
   color: white;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 600;
 }
 

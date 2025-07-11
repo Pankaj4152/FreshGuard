@@ -1,189 +1,62 @@
 {
-  "user1": {
-    "total_price": 19.4,
-    "total_price_after_discount": 17.75,
-    "total_price": 36.39,
-    "total_price_after_discount": 36.39,
+  "test_user": {
+    "total_price": 54.18,
+    "total_price_after_discount": 53.98,
     "food_saved": 0,
     "co2_reduced": 0,
-    "ITEM0007": {
-      "item_name": "Juice",
-      "quantity": 2,
-      "price_per_unit": 3.49,
-      "added_at": "2025-07-09T22:12:39.673219"
-    },
-    "ITEM0003": {
-      "item_name": "Yogurt",
-      "quantity": 7,
-      "price_per_unit": 2.99,
-      "added_at": "2025-07-09T22:12:55.396843"
-    },
-    "ITEM0021": {
-      "item_name": "Bagel",
-      "quantity": 1,
-      "price_per_unit": 3.49,
-      "added_at": "2025-07-09T19:54:13.291581",
-      "discount_given": 0,
-      "discounted_price": 3.49
-    },
-    "ITEM0015": {
-      "item_name": "Banana",
-      "quantity": 1,
-      "price_per_unit": 0.69,
-      "added_at": "2025-07-09T19:54:25.619597",
-      "discount_given": 0,
-      "discounted_price": 0.69
-      "added_at": "2025-07-09T22:13:56.705087"
-    },
-    "ITEM0013": {
+    "ITEM0014": {
       "item_name": "Apple",
-      "quantity": 5,
+      "quantity": 1,
       "price_per_unit": 0.99,
-      "added_at": "2025-07-09T19:55:04.553077",
-      "discount_given": 0,
-      "discounted_price": 0.99
+      "added_at": "2025-07-11T23:02:44.105769",
+      "discount_given": 20.0,
+      "discounted_price": 0.79,
+      "category": "Produce",
+      "expiry_date": "2025-07-05",
+      "max_discount": 20.0
     },
     "ITEM0017": {
       "item_name": "Carrot",
       "quantity": 1,
       "price_per_unit": 1.29,
-      "added_at": "2025-07-09T23:52:49.204195",
+      "added_at": "2025-07-11T23:03:25.221360",
       "discount_given": 0,
-      "discounted_price": 1.29
+      "discounted_price": 1.29,
+      "category": "Produce",
+      "expiry_date": "2025-07-08",
+      "max_discount": 15
+    },
+    "ITEM0001": {
+      "item_name": "Cheese",
+      "quantity": 7,
+      "price_per_unit": 5.99,
+      "added_at": "2025-07-12T00:25:30.878832",
+      "discount_given": 0,
+      "discounted_price": 5.99,
+      "category": "Dairy",
+      "expiry_date": "2025-07-09",
+      "max_discount": 20
     },
     "ITEM0003": {
       "item_name": "Yogurt",
       "quantity": 1,
       "price_per_unit": 2.99,
-      "added_at": "2025-07-10T05:54:25.955006",
-      "discount_given": 15.0,
-      "discounted_price": 2.54,
+      "added_at": "2025-07-12T00:30:54.390501",
+      "discount_given": 0,
+      "discounted_price": 2.99,
       "category": "Dairy",
       "expiry_date": "2025-07-07",
-      "max_discount": 15.0
+      "max_discount": 15
     },
-    "ITEM0001": {
-      "item_name": "Cheese",
-      "quantity": 1,
-      "price_per_unit": 5.99,
-      "added_at": "2025-07-10T05:59:09.801242",
-      "discount_given": 20.0,
-      "discounted_price": 4.79,
-      "category": "Dairy",
-      "expiry_date": "2025-07-09",
-      "max_discount": 20.0
-    "ITEM0023": {
-      "item_name": "Muffin",
-      "quantity": 1,
-      "price_per_unit": 4.99,
-      "added_at": "2025-07-09T22:14:00.774259"
-    }
-  },
-  "test_user": {
-    "total_price": 1.68,
-    "total_price_after_discount": 1.68,
-    "food_saved": 0,
-    "co2_reduced": 0,
-    "ITEM0013": {
-      "item_name": "Apple",
-      "quantity": 1,
-      "price_per_unit": 0.99,
-      "added_at": "2025-07-10T07:25:54.715525",
+    "ITEM0007": {
+      "item_name": "Juice",
+      "quantity": 2,
+      "price_per_unit": 3.49,
+      "added_at": "2025-07-12T00:31:53.996168",
       "discount_given": 0,
-      "discounted_price": 0.99,
-      "category": "Produce",
-      "expiry_date": "2025-07-10",
-      "max_discount": 20
-    },
-    "ITEM0015": {
-      "item_name": "Banana",
-      "quantity": 1,
-      "price_per_unit": 0.69,
-      "added_at": "2025-07-10T07:26:07.945177",
-      "discount_given": 0,
-      "discounted_price": 0.69,
-      "category": "Produce",
-      "expiry_date": "2025-07-05",
-      "max_discount": 25
-    }
-  },
-  "demo_user": {
-    "total_price": 0,
-    "total_price_after_discount": 0,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "test_user_fixes": {
-    "total_price": 0,
-    "total_price_after_discount": 0,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "pricing_test_user": {
-    "total_price": 0,
-    "total_price_after_discount": 0,
-    "food_saved": 0,
-    "co2_reduced": 0
-  },
-  "workflow_test_user": {
-    "total_price": 2.99,
-    "total_price_after_discount": 2.24,
-    "food_saved": 0,
-    "co2_reduced": 0,
-    "ITEM0003_NEAR_EXPIRY": {
-      "item_name": "Near-Expiry Yogurt",
-      "quantity": 1,
-      "price_per_unit": 2.99,
-      "added_at": "2025-07-10T06:35:42.843107",
-      "discount_given": 25.0,
-      "discounted_price": 2.24,
-      "category": "Dairy",
-      "expiry_date": "2025-07-11",
-      "max_discount": 25.0
-    }
-  },
-  "frontend_test_user": {
-    "total_price": 2.99,
-    "total_price_after_discount": 2.09,
-    "food_saved": 0,
-    "co2_reduced": 0,
-    "ITEM0047": {
-      "item_name": "Near-Expiry Yogurt",
-      "quantity": 1,
-      "price_per_unit": 2.99,
-      "added_at": "2025-07-10T07:09:25.165766",
-      "discount_given": 30.0,
-      "discounted_price": 2.09,
-      "category": "Dairy",
-      "expiry_date": "2025-07-04",
-      "max_discount": 30.0
-    }
-  },
-  "frontend_workflow_user": {
-    "total_price": 6.98,
-    "total_price_after_discount": 6.08,
-    "food_saved": 0,
-    "co2_reduced": 0,
-    "ITEM0047_REPLACEMENT": {
-      "item_name": "Near-Expiry Yogurt",
-      "quantity": 1,
-      "price_per_unit": 2.99,
-      "added_at": "2025-07-10T07:10:51.798210",
-      "discount_given": 30.0,
-      "discounted_price": 2.09,
-      "category": "Dairy",
-      "expiry_date": "2025-07-04",
-      "max_discount": 30.0
-    },
-    "ITEM0011": {
-      "item_name": "Milk",
-      "quantity": 1,
-      "price_per_unit": 3.99,
-      "added_at": "2025-07-10T07:10:56.046996",
-      "discount_given": 0,
-      "discounted_price": 3.99,
+      "discounted_price": 3.49,
       "category": "Beverages",
-      "expiry_date": "2025-07-08",
+      "expiry_date": "2025-07-10",
       "max_discount": 20
     }
   }
