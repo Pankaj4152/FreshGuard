@@ -1,22 +1,18 @@
-# ✅ Core Build Tools (must come first)
+# Build dependencies
 setuptools>=58.0.0
 wheel
 
-# ✅ Web Framework & Server
+# Backend dependencies
 Flask==2.3.3
 Flask-CORS==4.0.0
 gunicorn==21.2.0
-
-# ✅ ML & Data Science Dependencies
 pandas==1.5.3
 numpy==1.24.3
 scikit-learn==1.3.2
 joblib==1.3.2
 python-dateutil==2.8.2
-
-# ✅ Env Config
 python-dotenv==1.0.0
 
-# ✅ Testing (Optional — only if needed in production)
+# Optional testing tools (can be removed if not needed in production)
 pytest==7.4.3
 pytest-flask==1.3.0
