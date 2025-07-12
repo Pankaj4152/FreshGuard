@@ -144,11 +144,11 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
         
         {/* Smart feature badges */}
         <div className="product-badges">
-          {hasDiscount && (
+          {/* {hasDiscount && (
             <div className="discount-badge">
               {discountPercent}% OFF
             </div>
-          )}
+          )} */}
           {isUrgent && (
             <div className="urgency-badge">
               <Zap size={12} />
@@ -180,7 +180,7 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
           )}
         </h3>
         <div className="product-details">
-          <span className="product-id">ID: {product.item_id}</span>
+          {/* <span className="product-id">ID: {product.item_id}</span> */}
           <span className="product-category">{product.category}</span>
           {isGrouped && (
             <span className="variant-count" title="Multiple freshness options available">
@@ -198,7 +198,7 @@ const ProductCard = ({ product, onAddToCart, showSmartFeatures = true }) => {
                 </span>
                 {discountPercent > 0 && (
                   <span className="discount-badge">
-                    -{discountPercent}% OFF
+                    {discountPercent}% OFF
                   </span>
                 )}
               </div>

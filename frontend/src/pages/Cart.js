@@ -208,7 +208,7 @@ const Cart = () => {
                       fontSize: '1rem'
                     }}
                   >
-                    <span style={{ color: '#888', display: 'flex', alignItems: 'center' }}>
+                    {/* <span style={{ color: '#888', display: 'flex', alignItems: 'center' }}>
                       <strong style={{ minWidth: 110 }}>Original Price:</strong>
                       <span style={{ textDecoration: 'line-through', marginLeft: 8 }}>
                         ${item.price_per_unit}
@@ -225,7 +225,7 @@ const Cart = () => {
                       <span style={{ marginLeft: 8 }}>
                         {item.discount_given}% off
                       </span>
-                    </span>
+                    </span> */}
 </div>
                     <CartItem
                       item={item}
