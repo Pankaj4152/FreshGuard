@@ -1,18 +1,22 @@
-# FreshGuard 2.0 Backend Dependencies
+# ✅ Core Build Tools (must come first)
+setuptools>=58.0.0
+wheel
+
+# ✅ Web Framework & Server
 Flask==2.3.3
 Flask-CORS==4.0.0
-# pandas==2.1.3
+gunicorn==21.2.0
+
+# ✅ ML & Data Science Dependencies
 pandas==1.5.3
 numpy==1.24.3
 scikit-learn==1.3.2
 joblib==1.3.2
 python-dateutil==2.8.2
+
+# ✅ Env Config
 python-dotenv==1.0.0
+
+# ✅ Testing (Optional — only if needed in production)
 pytest==7.4.3
 pytest-flask==1.3.0
-
-# setuptools>=42
-# wheel
-pandas==1.5.3
-Flask
-gunicorn
