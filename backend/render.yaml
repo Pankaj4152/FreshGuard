@@ -3,7 +3,7 @@ services:
     name: freshguard-backend
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn api.app:app
     envVars:
       - key: FLASK_ENV
         value: production
