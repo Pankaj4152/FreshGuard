@@ -21,7 +21,7 @@ import {
 
 const Home = () => {
   const { user, userImpact } = useUser();
-  const { addReplacementToCart } = useCart();
+  const { addToCart, addReplacementToCart } = useCart();
   const { showSuccess, showError, ToastContainer } = useToast();
   
   const [featuredProducts, setFeaturedProducts] = useState([]);

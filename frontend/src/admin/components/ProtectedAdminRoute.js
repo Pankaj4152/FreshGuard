@@ -7,6 +7,7 @@ import AdminSidebar from '../components/AdminSidebar';
 
 const ProtectedAdminRoute = () => {
   const { isAuthenticated, loading } = useAdminAuth();
+  const location = useLocation(); // <-- Move this here, outside any if
 
   if (loading) {
     return (
@@ -17,8 +18,6 @@ const ProtectedAdminRoute = () => {
     );
   }
 
-  const location = useLocation();
-  
   // Check if user is authenticated
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -27,7 +26,6 @@ const ProtectedAdminRoute = () => {
   // Check permissions based on current path
   const currentPath = location.pathname;
   let requiredPermission = '';
-  
   if (currentPath.includes('/admin/dashboard')) {
     requiredPermission = 'dashboard.view';
   } else if (currentPath.includes('/admin/inventory')) {
@@ -43,9 +41,7 @@ const ProtectedAdminRoute = () => {
   } else if (currentPath.includes('/admin/settings')) {
     requiredPermission = 'settings.view';
   }
-  
-  // If permission is required and user doesn't have it, show access denied
-  const hasPermission = useAdminPermission(requiredPermission);
+  const hasPermission = useAdminPermission(requiredPermission); // Call hook once, not inside ifs
   
   console.log('Current path:', currentPath);
   console.log('Required permission:', requiredPermission);

@@ -79,7 +79,7 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
                   <span>Expires: {replacement.original?.expiry_date}</span>
                 </div>
                 <div className="price">
-                  ${(replacement.original?.discounted_price || replacement.original?.price_per_unit || 0).toFixed(2)}
+                  ${(replacement.original?.price_per_unit || 0).toFixed(2)}
                 </div>
                 <small className="text-muted">Regular choice - longer shelf life</small>
               </div>
@@ -109,10 +109,15 @@ const ReplacementModal = ({ isOpen, onClose, replacement, onAccept, onDecline })
                   <small>({replacement.days_until_expiry} days left)</small>
                 </div>
                 <div className="price">
-                  ${(replacement.discounted_price || replacement.price_per_unit || 0).toFixed(2)}
-                  {(replacement.effective_discount || replacement.discount || 0) > 0 && (
+                  <span className="original-price-small" style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.9em' }}>
+                    ${(replacement.price_per_unit || 0).toFixed(2)}
+                  </span>
+                  <span className="discounted-price-large" style={{ color: '#047857', fontWeight: 'bold', marginLeft: '8px' }}>
+                    ${(replacement.price_per_unit * (1 - (replacement.effective_discount || replacement.discount || replacement.max_discount || 0) / 100)).toFixed(2)}
+                  </span>
+                  {(replacement.effective_discount || replacement.discount || replacement.max_discount || 0) > 0 && (
                     <span className="discount-badge ml-2">
-                      {replacement.effective_discount || replacement.discount}% OFF
+                      {replacement.effective_discount || replacement.discount || replacement.max_discount}% OFF
                     </span>
                   )}
                 </div>

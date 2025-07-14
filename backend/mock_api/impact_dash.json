@@ -6,5 +6,13 @@
     "total_loyalty_points": 56,
     "total_orders": 3,
     "total_items": 28
+  },
+  "test_user": {
+    "total_food_saved": 10.4,
+    "total_money_saved": 89.87000000000002,
+    "total_co2_reduced": 62.0,
+    "total_loyalty_points": 46,
+    "total_orders": 4,
+    "total_items": 23
   }
 }

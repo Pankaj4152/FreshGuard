@@ -1,5 +1,5 @@
-// const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const BASE_URL = process.env.REACT_APP_API_URL || 'https://freshguard-p19v.onrender.com';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// const BASE_URL = process.env.REACT_APP_API_URL || 'https://freshguard-p19v.onrender.com';
 class ApiService {
   async request(endpoint, options = {}) {
     const url = `${BASE_URL}${endpoint}`;

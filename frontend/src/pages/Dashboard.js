@@ -36,6 +36,7 @@ import {
   Check,
   Zap
 } from 'lucide-react';
+// import { generateMockChartData } from '../utils/chartUtils';
 
 // Register ChartJS components
 ChartJS.register(
