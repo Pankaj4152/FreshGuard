@@ -49,7 +49,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="logo">
             <Leaf size={32} />
-            <span>FreshGuard 2.0</span>
+            <span>FreshGuard</span>
           </Link>
 
           {/* Desktop Navigation */}

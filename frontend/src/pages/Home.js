@@ -211,7 +211,7 @@ const Home = () => {
         <div className="container">
           <div className="text-center">
             <h1 className="hero-title">
-              Welcome to FreshGuard 2.0
+              Welcome to FreshGuard
             </h1>
             <p className="hero-subtitle">
               AI-driven food waste reduction and customer engagement system for Walmart

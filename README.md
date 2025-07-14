@@ -1,4 +1,4 @@
-# FreshGuard 2.0 - Smart Inventory Management
+# FreshGuard - Smart Inventory Management
 
 🎯 **Complete integration between backend API and frontend React application**
 

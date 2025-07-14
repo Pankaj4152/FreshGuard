@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="footer-section">
             <div className="flex items-center gap-2 mb-3">
               <Leaf size={24} className="text-warning" />
-              <h4>FreshGuard 2.0</h4>
+              <h4>FreshGuard</h4>
             </div>
             <p>
               AI-driven food waste reduction and customer engagement system for Walmart. 
@@ -75,7 +75,7 @@ const Footer = () => {
         <div className="footer-bottom">
           <div className="flex justify-between items-center">
             <div>
-              <p>&copy; {currentYear} FreshGuard 2.0 by Walmart. All rights reserved.</p>
+              <p>&copy; {currentYear} FreshGuard by Walmart. All rights reserved.</p>
             </div>
             <div className="flex gap-4">
               <a href="#privacy">Privacy Policy</a>

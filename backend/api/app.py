@@ -138,7 +138,7 @@ app.register_blueprint(loyalty)
 def home():
     """Health check endpoint."""
     return jsonify({
-        "message": "FreshGuard 2.0 API is running!",
+        "message": "FreshGuard API is running!",
         "version": "2.0",
         "features": {
             "grouped_inventory": GROUPING_AVAILABLE,
@@ -1311,7 +1311,7 @@ def api_update_cart_quantity():
 
 if __name__ == '__main__':
     # print("\n" + "="*60)
-    # print("🚀 Starting FreshGuard 2.0 API Server")
+    # print("🚀 Starting FreshGuard API Server")
     # print("="*60)
     # print("📋 Available endpoints:")
     # print("   Core Functions:")
