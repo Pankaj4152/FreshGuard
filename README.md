@@ -1,173 +1,131 @@
-# FreshGuard - Smart Inventory Management
+# FreshGuard
 
-🎯 **Complete integration between backend API and frontend React application**
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask" />
+  <img src="https://img.shields.io/badge/Scikit--Learn-ML-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white" alt="Scikit-Learn" />
+  <img src="https://img.shields.io/badge/TailwindCSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+</p>
+
+> **AI-Driven Smart Inventory & Shelf-Life Prediction Platform**
+
+FreshGuard is an intelligent inventory management platform that combines Machine Learning predictive algorithms with real-time stock tracking. It helps retail stores and grocery chains reduce food waste by accurately forecasting product expiry dates, optimizing discount strategies, and automating inventory rotation.
+
+---
+
+## 🎯 Key Features
+
+- 🧠 **AI Shelf-Life Prediction**: Trained `scikit-learn` regression model predicting expiry windows based on storage conditions and food item types.
+- 📦 **Real-Time Inventory Management**: Automated stock updates, category filtering, and real-time inventory synchronization.
+- 💰 **Dynamic Discount Engine**: Automated discount recommendations for near-expiry items to maximize recovery and reduce waste.
+- 🛒 **Multi-User Cart & Checkout Workflow**: Persistent user cart management connected to live stock APIs.
+- 📊 **Interactive Analytics Dashboard**: React dashboard powered by `chart.js` for visual stock analytics, turnover rates, and freshness alerts.
+
+---
+
+## 🏗️ Architecture & Directory Overview
+
+```
+FreshGuard/
+├── backend/
+│   ├── api/
+│   │   └── app.py                        # Flask API endpoints (inventory, cart, ML predictions)
+│   ├── mock_api/
+│   │   ├── current_walmart_inventory.json # Live inventory database store
+│   │   └── users_cart.json                # User cart data store
+│   ├── models/
+│   │   ├── shelf_life_model.joblib        # Pre-trained Scikit-Learn model
+│   │   ├── shelf_life_model_encoders.joblib # Feature encoders
+│   │   ├── data/food_data.csv             # Model training dataset
+│   │   └── predict_expiry.py              # ML prediction logic
+│   └── scripts/                           # Inventory generation & CLI utilities
+│
+├── frontend/
+│   ├── src/                               # React components, context, and dashboard UI
+│   ├── public/                            # Static assets
+│   └── package.json                       # Frontend dependencies & React 19 configuration
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 19, React Router v7, TailwindCSS v4, Lucide Icons, Chart.js |
+| **Backend API** | Python 3.10+, Flask, Flasgger (Swagger API Docs) |
+| **Machine Learning** | Scikit-Learn, Pandas, NumPy, Joblib |
+| **Data Storage** | JSON File Stores / Firebase Integration Ready |
+
+---
 
 ## 🚀 Quick Start
 
-### Windows Users:
-1. Double-click `start_backend.bat` to start the backend server
-2. Double-click `start_frontend.bat` to start the frontend development server
-3. Open http://localhost:3000 in your browser
+### Option 1: One-Click Startup (Windows)
 
-### Manual Setup:
+- **Backend**: Double-click `start_backend.bat`
+- **Frontend**: Double-click `start_frontend.bat`
+- **Access App**: Open `http://localhost:3000`
+
+---
+
+### Option 2: Manual Terminal Setup
+
+#### 1️⃣ Backend Setup
 ```bash
-# Backend (Terminal 1)
+# Navigate to backend directory
 cd backend
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Launch Flask API server
 cd api
 python app.py
+```
+The API server will run at `http://localhost:5000`.
 
-# Frontend (Terminal 2)
+#### 2️⃣ Frontend Setup
+```bash
+# Open a new terminal and navigate to frontend directory
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start development server
 npm start
 ```
+The application will open at `http://localhost:3000`.
 
-### Run Integration Tests:
+---
+
+## 🧪 Integration Testing
+
+To run complete API & workflow integration verification:
 ```bash
 python test_integration.py
-# or double-click test_integration.bat on Windows
 ```
 
-## 📁 Project Structure
+---
 
-freshguard-2.0/
-├── backend/
-│   ├── api/
-│   │   └── app.py                        # Flask backend (API endpoints)
-│   ├── mock_api/
-│   │   ├── current_walmart_inventory.json # Real-time inventory (used by backend)
-│   │   └── users_cart.json                # User cart data (multi-user)
-│   ├── models/
-│   │   ├── shelf_life_model.joblib        # Trained ML model
-│   │   ├── shelf_life_model_encoders.joblib
-│   │   ├── shelf_life_model_columns.joblib
-│   │   ├── data/
-│   │   │   └── food_data.csv              # Training data for shelf life model
-│   │   ├── convert_json_to_csv.py         # Converts inventory JSON to CSV
-│   │   ├── generate_food_data.py          # Generates synthetic training data
-│   │   └── predict_expiry.py              # Model training and prediction
-│   ├── scripts/
-│   │   ├── generate_walmart_inventory.py  # Script to generate inventory
-│   │   ├── cart_manage.py                 # CLI for cart management
-│   │   ├── train_shelf_life_model.py      # CLI for model training
-│   │   ├── predict_shelf_life.py          # CLI for shelf life prediction
-│   │   └── update_stock.py                # CLI for inventory updates
-│   ├── requirements.txt                   # Backend dependencies
-│   └── config.py                          # Config (Firebase, file paths, etc.)
-│
-├── frontend/
-│   ├── public/
-│   │   ├── index.html                     # React HTML template
-│   │   └── favicon.ico                    # App favicon
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Inventory.js               # Inventory UI
-│   │   │   ├── Alerts.js                  # Expiry alerts UI
-│   │   │   └── Dashboard.js               # Food saved metrics (Chart.js)
-│   │   ├── App.js                         # Main React app
-│   │   ├── App.css                        # Tailwind CSS styles
-│   │   └── index.js                       # React entry point
-│   ├── package.json                       # Frontend dependencies
-│   └── tailwind.config.js                 # Tailwind CSS config
-│
-├── docs/
-│   ├── workflow.xml                       # Draw.io workflow diagram
-│   ├── workflow.png                       # Exported workflow image
-│   ├── demo_outline.md                    # Demo plan
-│   └── pitch.md                           # Presentation outline
-│
-├── tests/
-│   ├── test_endpoints.py                  # Flask endpoint tests
-│   ├── test_model.py                      # Model tests
-│   └── test_data.json                     # Test data
-│
-├── INTEGRATION_GUIDE.md              # Detailed testing instructions
-├── start_backend.py                  # Cross-platform backend startup
-├── start_frontend.py                 # Cross-platform frontend startup
-├── test_integration.py               # Automated integration tests
-├── start_backend.bat                 # Windows backend startup
-├── start_frontend.bat                # Windows frontend startup
-├── test_integration.bat              # Windows integration tests
-└── README.md                         # This file
+## 🤝 Contributing
 
-## ✨ Features
+Contributions are welcome! Feel free to open issues or submit Pull Requests to enhance ML models or dashboard features.
 
-### Backend API (20+ endpoints)
-- 🛒 **Cart Management**: Add, remove, clear, checkout with multi-user support
-- 📦 **Inventory Grouping**: Smart categorization and search functionality
-- 🔄 **Smart Replacements**: AI-powered suggestions for near-expiry items
-- 🎯 **Loyalty System**: Points accumulation and redemption
-- 🌱 **Environmental Impact**: Carbon footprint and waste reduction tracking
-- 🤖 **ML Predictions**: Shelf life prediction using trained models
-- ⚠️ **Expiry Alerts**: Real-time notifications for expiring products
-- ⚙️ **Product Thresholds**: Configurable freshness and discount rules
+---
 
-### Frontend React App
-- 🎨 **Modern UI**: Responsive design with comprehensive error handling
-- 📱 **Smart Cart**: Real-time updates with replacement suggestions
-- 📊 **User Dashboard**: Analytics, loyalty points, and impact metrics
-- 🔍 **Advanced Search**: Grouped inventory with filtering
-- 💡 **Smart Features**: Automated suggestions and ML integration
-- 🌐 **Real-time Sync**: Live data updates from backend API
+## 📄 License
 
-## 🧪 Testing
+This project is licensed under the MIT License.
 
-### Automated Testing
-```bash
-# Run comprehensive integration tests
-python test_integration.py
 
-# Test backend health
-curl http://localhost:5000/health
-
-# Test cart operations
-curl -X POST http://localhost:5000/add_to_cart \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"user1","item_query":"Cheese","quantity":1}'
-```
-
-### Manual Testing
-1. **Backend**: Start server and visit http://localhost:5000/health
-2. **Frontend**: Start dev server and visit http://localhost:3000
-3. **Integration**: Test cart, replacements, loyalty, and impact features
-
-## 📚 Documentation
-
-- `INTEGRATION_GUIDE.md` - Comprehensive testing instructions
-- `docs/api_reference.md` - Complete API endpoint documentation
-- `docs/data_schema.md` - Data structure specifications
-- `docs/implementation.markdown` - Technical implementation details
-
-## 🛠️ Development
-
-### Backend Dependencies
-- Flask 2.3.3 (API framework)
-- Flask-CORS 4.0.0 (Cross-origin requests)
-- pandas 2.1.3 (Data manipulation)
-- scikit-learn 1.3.2 (Machine learning)
-- joblib 1.3.2 (Model serialization)
-
-### Frontend Dependencies
-- React 18+ (UI framework)
-- Modern JavaScript (ES6+)
-- CSS3 with responsive design
-- Fetch API for backend communication
-
-## 🎯 Success Criteria
-
-✅ **Backend API**: All 20+ endpoints working with comprehensive error handling  
-✅ **Frontend Integration**: Complete React app with real-time backend communication  
-✅ **Smart Features**: ML predictions, replacements, loyalty, and impact tracking  
-✅ **Error Handling**: Robust fallbacks and user-friendly error messages  
-✅ **Testing**: Automated integration tests and manual verification scripts  
-✅ **Documentation**: Complete setup and testing instructions  
+---
 
 ## 🔧 Troubleshooting
 
-**Backend won't start**: Check Python dependencies and port 5000 availability  
-**Frontend build errors**: Ensure Node.js 16+ and run `npm install`  
-**API connection issues**: Verify backend is running and check CORS settings  
-**Integration problems**: Run `test_integration.py` for detailed diagnostics  
-
-For detailed troubleshooting, see `INTEGRATION_GUIDE.md`
+- **Backend issues**: Verify Python dependencies with `pip install -r requirements.txt` and port `5000` availability.
+- **Frontend build issues**: Ensure Node.js 18+ and execute `npm install` inside the `frontend/` folder.
+- **Diagnostics**: Run `python test_integration.py` for comprehensive integration diagnostics.
